@@ -1,0 +1,60 @@
+---
+import { getCollection } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+const experiments = (
+  await getCollection("experiments", ({ data }) => !data.draft)
+).sort((a, b) => b.data.started.valueOf() - a.data.started.valueOf());
+const active = experiments.filter((e) => e.data.status === "active");
+const concluded = experiments.filter((e) => e.data.status === "concluded");
+---
+
+<Base
+  title="Experiments — Jamie Thompson"
+  description="Things built and tested in public: hypothesis up front, data as it accrues, outcome when concluded."
+>
+  <h1>Experiments</h1>
+  <p>
+    Built and tested in public. Each one states its hypothesis up front, carries
+    its data as it accrues, and records the outcome — including the failures.
+  </p>
+  {
+    experiments.length === 0 && (
+      <p class="muted">First experiment in progress.</p>
+    )
+  }
+  {
+    active.length > 0 && (
+      <section>
+        <h2>Active</h2>
+        <ul>
+          {active.map((experiment) => (
+            <li>
+              <a href={`/experiments/${experiment.id}/`}>
+                {experiment.data.title}
+              </a>
+              <p class="muted">{experiment.data.description}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+  {
+    concluded.length > 0 && (
+      <section>
+        <h2>Concluded</h2>
+        <ul>
+          {concluded.map((experiment) => (
+            <li>
+              <a href={`/experiments/${experiment.id}/`}>
+                {experiment.data.title}
+              </a>
+              <p class="muted">{experiment.data.description}</p>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>

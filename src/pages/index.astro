@@ -2,6 +2,9 @@
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 
+const experiments = (
+  await getCollection("experiments", ({ data }) => !data.draft)
+).sort((a, b) => b.data.started.valueOf() - a.data.started.valueOf());
 const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
@@ -12,23 +15,32 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
 
 <Base
   title="Jamie Thompson"
-  description="Essays, case studies, and field notes on directing coding agents."
+  description="AI-product experiments built in public — the data, the field notes, and the essays they produce."
 >
   <h1>Jamie Thompson</h1>
   <p>
-    I direct coding agents at production standards — and write down what the
-    failures teach. Long-form arguments live in <a href="/essays/">essays</a>;
-    the worked cases behind them live in the <a href="/notes/">field notes</a>.
+    I build experiments in the AI-product space in public and publish the data.
+    <a href="/experiments/">Experiments</a> carry the numbers, <a href="/notes/"
+      >field notes</a
+    >
+    capture the lessons the day they land, and <a href="/essays/">essays</a> make
+    the arguments. The system I direct coding agents with is public too:
+    <a href="https://github.com/jamierthompson/agent-conventions"
+      >agent-conventions</a
+    >, improved in the open.
   </p>
 
   {
-    essays.length > 0 && (
+    experiments.length > 0 && (
       <section>
-        <h2>Latest essays</h2>
+        <h2>Experiments</h2>
         <ul>
-          {essays.slice(0, 5).map((essay) => (
+          {experiments.slice(0, 5).map((experiment) => (
             <li>
-              <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
+              <a href={`/experiments/${experiment.id}/`}>
+                {experiment.data.title}
+              </a>
+              <span class="muted"> — {experiment.data.status}</span>
             </li>
           ))}
         </ul>
@@ -44,6 +56,21 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
           {notes.slice(0, 5).map((note) => (
             <li>
               <a href={`/notes/${note.id}/`}>{note.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    essays.length > 0 && (
+      <section>
+        <h2>Essays</h2>
+        <ul>
+          {essays.slice(0, 5).map((essay) => (
+            <li>
+              <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
             </li>
           ))}
         </ul>

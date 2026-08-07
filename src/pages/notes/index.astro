@@ -9,13 +9,13 @@ const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
 
 <Base
   title="Field notes — Jamie Thompson"
-  description="Worked cases from directing coding agents: what failed, what it proved, what changed."
+  description="Short, atomic lessons written the day they land — one idea per note, linked to the evidence."
 >
   <h1>Field notes</h1>
   <p>
-    Worked cases, one per note: what failed, what it proved, and what rule
-    changed because of it. Notes link to each other; each note lists what
-    references it.
+    One idea per note, written the day it lands: a rule, a lesson, an
+    observation. Notes link to each other and to the experiments and essays
+    behind them; each note lists what references it.
   </p>
   <ul>
     {

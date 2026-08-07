@@ -1,17 +1,53 @@
 ---
+import { getCollection } from "astro:content";
+import Base from "../layouts/Base.astro";
 
+const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
+const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
+  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
+);
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width" />
-    <meta name="generator" content={Astro.generator} />
-    <title>Astro</title>
-  </head>
-  <body>
-    <h1>Astro</h1>
-  </body>
-</html>
+<Base
+  title="Jamie Thompson"
+  description="Essays, case studies, and field notes on directing coding agents."
+>
+  <h1>Jamie Thompson</h1>
+  <p>
+    I direct coding agents at production standards — and write down what the
+    failures teach. Long-form arguments live in <a href="/essays/">essays</a>;
+    the worked cases behind them live in the <a href="/notes/">field notes</a>.
+  </p>
+
+  {
+    essays.length > 0 && (
+      <section>
+        <h2>Latest essays</h2>
+        <ul>
+          {essays.slice(0, 5).map((essay) => (
+            <li>
+              <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+
+  {
+    notes.length > 0 && (
+      <section>
+        <h2>Latest field notes</h2>
+        <ul>
+          {notes.slice(0, 5).map((note) => (
+            <li>
+              <a href={`/notes/${note.id}/`}>{note.data.title}</a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )
+  }
+</Base>

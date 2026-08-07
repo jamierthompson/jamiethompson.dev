@@ -1,0 +1,37 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+
+export const getStaticPaths = (async () => {
+  const essays = await getCollection("essays", ({ data }) => !data.draft);
+  return essays.map((essay) => ({
+    params: { slug: essay.id },
+    props: { essay },
+  }));
+}) satisfies GetStaticPaths;
+
+const { essay } = Astro.props;
+const { Content } = await render(essay);
+---
+
+<Base
+  title={`${essay.data.title} — Jamie Thompson`}
+  description={essay.data.description}
+>
+  <article>
+    <h1>{essay.data.title}</h1>
+    <p class="muted">
+      <time datetime={essay.data.pubDate.toISOString()}>
+        {
+          essay.data.pubDate.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+          })
+        }
+      </time>
+    </p>
+    <Content />
+  </article>
+</Base>

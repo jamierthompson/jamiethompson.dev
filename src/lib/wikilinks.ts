@@ -1,14 +1,24 @@
+import { slug } from "github-slugger";
+import { unified, type Processor } from "unified";
+import remarkParse from "remark-parse";
+import { visit } from "unist-util-visit";
+import { wikiLinkPlugin } from "remark-wiki-link";
+import type { Node } from "unist";
+
 /**
  * Wikilink conventions shared by the remark pipeline (astro.config.ts), the
  * backlink index, and the tests — one definition so they can't drift.
  *
  * `[[target]]` and `[[target|alias]]` resolve into the notes namespace.
+ * Targets slugify with github-slugger — the same slugger Astro's glob loader
+ * uses for entry ids — so a wikilink can always reach the note it names.
  * A link to a note that doesn't exist yet is allowed by design: it renders
- * with the `new` class and marks something worth writing later.
+ * with the `new` class (wired via `permalinks` in astro.config.ts) and marks
+ * something worth writing later.
  */
 
 export function slugifyWikiTarget(name: string): string {
-  return name.trim().toLowerCase().replace(/\s+/g, "-");
+  return slug(name.trim().replace(/\s+/g, " "));
 }
 
 export const wikiLinkOptions = {
@@ -17,13 +27,25 @@ export const wikiLinkOptions = {
   hrefTemplate: (permalink: string): string => `/notes/${permalink}/`,
 };
 
-const WIKI_LINK_PATTERN = /\[\[([^\][|]+)(?:\|[^\][]*)?\]\]/g;
+interface WikiLinkNode extends Node {
+  value: string;
+}
 
+const parser: Processor = unified()
+  .use(remarkParse)
+  .use(wikiLinkPlugin, wikiLinkOptions);
+
+/**
+ * Extraction runs the real parser, not a regex, so the backlink index counts
+ * exactly the links the rendered page carries — a wikilink inside a code
+ * fence or inline code renders as text and must not create a backlink.
+ */
 export function extractWikiTargets(markdown: string): string[] {
+  const tree = parser.parse(markdown);
   const targets = new Set<string>();
-  for (const match of markdown.matchAll(WIKI_LINK_PATTERN)) {
-    targets.add(slugifyWikiTarget(match[1]));
-  }
+  visit(tree, "wikiLink", (node: WikiLinkNode) => {
+    targets.add(slugifyWikiTarget(node.value));
+  });
   return [...targets];
 }
 

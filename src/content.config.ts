@@ -11,12 +11,12 @@ const entrySchema = z.object({
 });
 
 const essays = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/essays" }),
+  loader: glob({ pattern: "*.{md,mdx}", base: "./src/content/essays" }),
   schema: entrySchema,
 });
 
 const notes = defineCollection({
-  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/notes" }),
+  loader: glob({ pattern: "*.{md,mdx}", base: "./src/content/notes" }),
   schema: entrySchema,
 });
 

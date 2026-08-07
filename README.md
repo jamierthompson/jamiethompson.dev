@@ -1,13 +1,18 @@
 # jamiethompson.dev
 
-Personal site: essays and case studies about directing coding agents, plus a garden of
-backlinked field notes. Built with [Astro](https://astro.build).
+A lab notebook in public: AI-product experiments with their data, short backlinked field
+notes, and the essays they produce. Built with [Astro](https://astro.build).
+
+Three content types, three jobs: **experiments** (living pages — hypothesis, data, outcome),
+**notes** (one atomic lesson each, written the day it lands), **essays** (case studies and
+arguments, citing the other two). The pipeline: do the work → note the lesson → experiment
+accumulates data → essay synthesizes.
 
 ## Stack
 
-- **Astro** — static output; interactive islands only where an essay embeds a demo
-- **Content collections** — `essays/` and `notes/` as markdown/MDX with typed frontmatter
-- **Wikilinks** — `[[slug]]` links between entries, with a build-time backlink index
+- **Astro** — static output; interactive islands only where a page embeds a demo
+- **Content collections** — `experiments/`, `essays/`, `notes/` as markdown/MDX with typed frontmatter
+- **Wikilinks** — `[[slug]]` links resolve to notes, with a build-time backlink index
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)
 
 ## Develop

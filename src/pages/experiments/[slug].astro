@@ -1,0 +1,66 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import { formatDate } from "../../lib/formatDate";
+
+export const getStaticPaths = (async () => {
+  const experiments = await getCollection(
+    "experiments",
+    ({ data }) => !data.draft,
+  );
+  return experiments.map((experiment) => ({
+    params: { slug: experiment.id },
+    props: { experiment },
+  }));
+}) satisfies GetStaticPaths;
+
+const { experiment } = Astro.props;
+const { Content } = await render(experiment);
+const { data } = experiment;
+---
+
+<Base title={`${data.title} — Jamie Thompson`} description={data.description}>
+  <article>
+    <h1>{data.title}</h1>
+    <p class="muted">
+      {data.status === "active" ? "Active" : "Concluded"} · started{" "}
+      <time datetime={data.started.toISOString()}
+        >{formatDate(data.started)}</time
+      >
+      {
+        data.concluded && (
+          <>
+            {" "}
+            · concluded{" "}
+            <time datetime={data.concluded.toISOString()}>
+              {formatDate(data.concluded)}
+            </time>
+          </>
+        )
+      }
+      {
+        data.updated && !data.concluded && (
+          <>
+            {" "}
+            · updated{" "}
+            <time datetime={data.updated.toISOString()}>
+              {formatDate(data.updated)}
+            </time>
+          </>
+        )
+      }
+      {
+        data.repo && (
+          <>
+            {" "}
+            · <a href={data.repo}>repository</a>
+          </>
+        )
+      }
+    </p>
+    <p><strong>Hypothesis:</strong> {data.hypothesis}</p>
+    <hr />
+    <Content />
+  </article>
+</Base>

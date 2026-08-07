@@ -1,4 +1,5 @@
 import { defineConfig } from "astro/config";
+import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { wikiLinkPlugin } from "remark-wiki-link";
@@ -8,6 +9,9 @@ export default defineConfig({
   site: "https://jamiethompson.dev",
   integrations: [mdx(), sitemap()],
   markdown: {
-    remarkPlugins: [[wikiLinkPlugin, wikiLinkOptions]],
+    // MDX inherits this processor, so .md and .mdx share one pipeline.
+    processor: unified({
+      remarkPlugins: [[wikiLinkPlugin, wikiLinkOptions]],
+    }),
   },
 });

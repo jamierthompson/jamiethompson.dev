@@ -16,6 +16,9 @@ and case studies).
 
 ## Develop
 
+Node is pinned in `.nvmrc` — run `nvm use` (or `nvm install`) in the repo root
+and your shell matches CI and Vercel.
+
 ```sh
 npm install
 npm run dev        # local dev server

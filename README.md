@@ -24,6 +24,20 @@ npm run preview    # serve the production build
 npm run format     # prettier --write
 ```
 
+## The gate
+
+Run this before pushing — GitHub Actions runs the same commands in the same
+order, so green locally means green in CI:
+
+```sh
+npm run format:check
+npm run test        # vitest
+npm run test:e2e    # builds, then playwright against the preview server
+```
+
+Every pull request runs the `gate` job (`.github/workflows/ci.yml`) plus
+Vercel's build-and-deploy check.
+
 ## Structure
 
 ```

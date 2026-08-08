@@ -1,11 +1,17 @@
 ---
-title: "Briefing your reviewer turns them into a second author"
+title: "Briefing your AI reviewer turns it into a second author"
 description:
   "The QA rule was written and failed the same day. A briefed-but-fresh reviewer confirmed a
   design and found nothing; an unbriefed one found a ship-blocking regression behind a fully
   green gate — and a guard test structurally incapable of failing."
 pubDate: 2026-08-07
 ---
+
+This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
+production code written by coding agents. The workflow splits work into slices: one agent builds
+a slice, an automated gate (format, lint, types, tests, build) runs over it, and then — the subject
+of this essay — a separate agent tries to break it before I read it. This is the story of how the
+exact wording of that last step turned out to be load-bearing.
 
 **The rule:** before a slice enters a pull request, a fresh agent with **no prior context of the
 work** tries to break it.
@@ -14,7 +20,7 @@ Those five words — _no prior context of the work_ — weren't in the first ver
 version said "a fresh agent, never the one that wrote it," which sounds sufficient. It failed
 within hours, and how it failed is the most useful thing I learned that month.
 
-The premise underneath it: a green gate proves the author's intent, not the work's correctness.
+The premise underneath it: **a green gate proves the author's intent, not the work's correctness.**
 Unit tests run in jsdom, and jsdom doesn't paint — it measures nothing about focus visibility,
 tap-target size, layout shift, or paint timing. Build-green plus test-green is not evidence that
 a surface works. Something has to actually try to break it.
@@ -23,8 +29,8 @@ a surface works. Something has to actually try to break it.
 
 ## The accident
 
-One slice, two reviewers, back to back. Not designed as a comparison — I judged the first pass
-inadequate and re-ran it.
+One slice, two reviewers — both AI agents — back to back. Not designed as a comparison — I judged
+the first pass inadequate and re-ran it.
 
 The first reviewer was **primed**. It was handed the design rationale, the binding decisions, and
 "the gate is green," and it did a static read of the diff. The session record's own account:
@@ -36,9 +42,9 @@ The second was unprimed and told to break it, with a live browser against a runn
 It found two things.
 
 The first was a formatting violation sitting in a committed file. The local gate would have
-caught it — the author had run the new test file through `pnpm test` and never through
-`format:check`, then reported the slice green. A gate you run two steps of is not a gate; it's a
-self-report with a command attached.
+caught it — the author, also an agent, had run the new test file through `pnpm test` and never
+through `format:check`, then reported the slice green. **A gate you run two steps of is not a
+gate; it's a self-report with a command attached.**
 
 The second was a missing test on a security boundary. A client factory was supposed to throw when
 its read token was absent, and that throw is the guarantee the draft-content path leans on — no
@@ -48,13 +54,13 @@ unprimed reviewer pinned all three branches.
 Same slice, minutes apart. One confirmed the design and found nothing. The other found a broken
 gate discipline and an untested security guarantee.
 
-It also modelled the honesty the rule needs. What it couldn't verify, it refused to fake — it
+It also modeled the honesty the rule needs. What it couldn't verify, it refused to fake — it
 flagged the draft happy-path as untestable in that environment rather than reporting it clean.
 
 ## Then the same failure showed up one seat over
 
 Hours after I made the rule mandatory, a draft-preview fix went through it. This time the primed
-party wasn't the reviewer. It was the author.
+party wasn't the reviewer. It was the author — the coding agent that had written the fix.
 
 The author had declared the fix verified: the brand tokens appeared in the dev-server HTML, so
 the brand was applied. The unprimed QA agent opened with:
@@ -69,9 +75,9 @@ gate was fully green. The author's own regression test passed.
 In the same pass it found that the guard test protecting the fix **could not fail**. The test
 asserted `/<Suspense\b/.test(source)` against raw file source — and the load-bearing comment in
 that file contains the literal text `<Suspense>` three times. It was matching the comment, not
-the JSX. It proved this rather than asserting it: delete the real element, keep the comment, and
-the test stays 3/3 green while ESLint flags the now-unused import as a warning only, so the whole
-gate stays green.
+the JSX. And it proved this rather than asserting it: it deleted the real element, kept the
+comment, and watched the test stay 3/3 green while ESLint flagged the now-unused import as a
+warning only — the whole gate still green.
 
 The author didn't miss this through carelessness. It missed it because it was checking for what
 it expected to find. It verified _presence_ of the brand tokens; the defect was that they were
@@ -95,8 +101,8 @@ method — computed style on a clean production build, in a detached worktree on
 torn down afterward. Nobody told it to. It reached for the right method precisely _because_ it
 hadn't been told what to expect. Priming doesn't just bias the conclusion; it narrows the search.
 
-Context is not neutral. Telling a reviewer _why_ you did something converts them into a second
-author.
+Context is not neutral. **Telling a reviewer _why_ you did something converts them into a second
+author.**
 
 ## The handoff is what enforces it
 
@@ -142,7 +148,7 @@ confident enough to separate findings from noise.
 
 ## Dev-done is not done
 
-This is an agent workflow, but it's modelled on something that already works. On a team, a slice
+This is an agent workflow, but it's modeled on something that already works. On a team, a slice
 that passes my own checks is developer-done, not review-done. It goes to a QA teammate who wasn't
 in the design conversation, and it goes to them for exactly this reason: a reviewer who helped
 shape a change reviews it against intent they already agreed with. That's not an AI problem.
@@ -152,10 +158,13 @@ A primed reviewer and an unprimed one read the same slice minutes apart and prod
 the design" and "a broken gate plus an untested security guarantee." The next day the same
 pattern turned up in the author's seat. Two demonstrations, two shapes.
 
-The source repo's pull requests and commit history are at
-[github.com/jamierthompson/digital-garden][repo]. The decision and session records quoted here
-were retired from `main` on 2026-06-30; read them at [`e7a7232`][retired].
+The build this happened on is archived, but its receipts stay public: the pull requests and
+commit history are at [github.com/jamierthompson/digital-garden][repo]. The decision and session
+records quoted here were retired from `main` on June 30, 2026; read them at [`e7a7232`][retired].
 
 [pr325]: https://github.com/jamierthompson/digital-garden/pull/325
 [repo]: https://github.com/jamierthompson/digital-garden
 [retired]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs
+
+The distilled rule is [Your AI reviewer must have no prior context of the work](/notes/no-prior-context/); the system it belongs to is
+[Directing AI agents](/essays/directing-agents/).

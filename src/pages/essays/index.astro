@@ -9,9 +9,10 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
 
 <Base
   title="Essays — Jamie Thompson"
-  description="Long-form writing on directing coding agents: governance, measurement, and the failures that shaped a working system."
+  description="The longer arguments — essays and case studies."
 >
   <h1>Essays</h1>
+  <p>The longer arguments — essays and case studies.</p>
   {essays.length === 0 && <p class="muted">First essay in progress.</p>}
   <ul>
     {

@@ -2,7 +2,9 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import Backlinks from "../../components/Backlinks.astro";
 import { formatDate } from "../../lib/formatDate";
+import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
   const essays = await getCollection("essays", ({ data }) => !data.draft);
@@ -14,6 +16,7 @@ export const getStaticPaths = (async () => {
 
 const { essay } = Astro.props;
 const { Content } = await render(essay);
+const backlinks = await getBacklinks("essays", essay.id);
 ---
 
 <Base
@@ -29,4 +32,6 @@ const { Content } = await render(essay);
     </p>
     <Content />
   </article>
+
+  <Backlinks backlinks={backlinks} />
 </Base>

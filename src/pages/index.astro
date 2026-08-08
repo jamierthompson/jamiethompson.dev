@@ -15,19 +15,25 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
 
 <Base
   title="Jamie Thompson"
-  description="AI-product experiments built in public — the data, the field notes, and the essays they produce."
+  description="AI-product engineering in public: experiments with published data, short notes, and long-form essays."
 >
   <h1>Jamie Thompson</h1>
   <p>
-    I build experiments in the AI-product space in public and publish the data.
-    <a href="/experiments/">Experiments</a> carry the numbers, <a href="/notes/"
-      >field notes</a
-    >
-    capture the lessons the day they land, and <a href="/essays/">essays</a> make
-    the arguments. The system I direct coding agents with is public too:
+    I'm an engineer working in the AI-product space, and this is my lab
+    notebook.{" "}
+    <a href="/experiments/">Experiments</a> run against a stated hypothesis and publish
+    the data — including the runs that lost. <a href="/notes/">Notes</a> hold one
+    idea each, and <a href="/essays/">essays</a> make the longer arguments.
+  </p>
+  <p>
+    Start with{" "}
+    <a href="/essays/directing-agents/"
+      >Directing AI agents: how I ship production code I didn't write</a
+    > — the system of governance and measurement that makes it work. Its working rules
+    are public at{" "}
     <a href="https://github.com/jamierthompson/agent-conventions"
       >agent-conventions</a
-    >, improved in the open.
+    >. That system is the first body of work here, not the last.
   </p>
 
   {
@@ -51,7 +57,7 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
   {
     notes.length > 0 && (
       <section>
-        <h2>Latest field notes</h2>
+        <h2>Notes</h2>
         <ul>
           {notes.slice(0, 5).map((note) => (
             <li>

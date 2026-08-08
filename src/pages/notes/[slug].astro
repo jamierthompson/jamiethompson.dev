@@ -2,8 +2,9 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import Backlinks from "../../components/Backlinks.astro";
 import { formatDate } from "../../lib/formatDate";
-import { buildBacklinkIndex, type LinkedEntry } from "../../lib/wikilinks";
+import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
   const notes = await getCollection("notes", ({ data }) => !data.draft);
@@ -12,18 +13,7 @@ export const getStaticPaths = (async () => {
 
 const { note } = Astro.props;
 const { Content } = await render(note);
-
-const published = [
-  ...(await getCollection("notes", ({ data }) => !data.draft)),
-  ...(await getCollection("essays", ({ data }) => !data.draft)),
-];
-const linkedEntries: LinkedEntry[] = published.map((entry) => ({
-  collection: entry.collection,
-  id: entry.id,
-  title: entry.data.title,
-  body: entry.body ?? "",
-}));
-const backlinks = buildBacklinkIndex(linkedEntries).get(note.id) ?? [];
+const backlinks = await getBacklinks("notes", note.id);
 ---
 
 <Base
@@ -40,19 +30,5 @@ const backlinks = buildBacklinkIndex(linkedEntries).get(note.id) ?? [];
     <Content />
   </article>
 
-  {
-    backlinks.length > 0 && (
-      <aside aria-labelledby="backlinks-heading">
-        <hr />
-        <h2 id="backlinks-heading">Referenced by</h2>
-        <ul>
-          {backlinks.map((source) => (
-            <li>
-              <a href={`/${source.collection}/${source.id}/`}>{source.title}</a>
-            </li>
-          ))}
-        </ul>
-      </aside>
-    )
-  }
+  <Backlinks backlinks={backlinks} />
 </Base>

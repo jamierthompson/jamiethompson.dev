@@ -1,12 +1,11 @@
 # jamiethompson.dev
 
-A lab notebook in public: AI-product experiments with their data, short backlinked field
-notes, and the essays they produce. Built with [Astro](https://astro.build).
+A lab notebook in public: experiments with their data, short backlinked notes, and
+longer essays. Built with [Astro](https://astro.build).
 
 Three content types, three jobs: **experiments** (living pages — hypothesis, data, outcome),
-**notes** (one atomic lesson each, written the day it lands), **essays** (case studies and
-arguments, citing the other two). The pipeline: do the work → note the lesson → experiment
-accumulates data → essay synthesizes.
+**notes** (one idea each), **essays** (the longer arguments
+and case studies).
 
 ## Stack
 
@@ -31,8 +30,4 @@ npm run format     # prettier --write
 src/
   content/         # essays and notes (the actual writing)
   pages/           # routes
-staging/           # source material being ported into content/ — temporary
 ```
-
-`staging/` holds material carried over from earlier repos while it's edited into
-publishable entries; it ships nothing and disappears when the port is done.

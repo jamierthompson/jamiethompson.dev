@@ -8,15 +8,11 @@ const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
 ---
 
 <Base
-  title="Field notes — Jamie Thompson"
-  description="Short, atomic lessons written the day they land — one idea per note, linked to the evidence."
+  title="Notes — Jamie Thompson"
+  description="Short notes — one idea each: a rule, a lesson, an observation."
 >
-  <h1>Field notes</h1>
-  <p>
-    One idea per note, written the day it lands: a rule, a lesson, an
-    observation. Notes link to each other and to the experiments and essays
-    behind them; each note lists what references it.
-  </p>
+  <h1>Notes</h1>
+  <p>One idea each — a rule, a lesson, an observation.</p>
   <ul>
     {
       notes.map((note) => (

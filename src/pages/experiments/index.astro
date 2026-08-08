@@ -16,7 +16,8 @@ const concluded = experiments.filter((e) => e.data.status === "concluded");
   <h1>Experiments</h1>
   <p>
     Built and tested in public. Each one states its hypothesis up front, carries
-    its data as it accrues, and records the outcome — including the failures.
+    its data as it accrues, and records the outcome — including the runs that
+    lost.
   </p>
   {
     experiments.length === 0 && (

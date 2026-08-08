@@ -1,11 +1,21 @@
-# The debate reached a verdict. Then a measurement destroyed it.
+---
+title: "Four AI agents debated to a verdict and one measurement overturned it"
+description: "Four AI agents drafted a design decision independently, cross-examined each other, and converged. A spike then tested the two facts the verdict rested on; both were false. Why adversarial debate can't catch a premise every participant shares — and why the losing reasoning was kept."
+pubDate: 2026-08-07
+---
 
 > Four agents drafted independently, cross-examined each other, and converged on an answer. A
 > spike then tested the two facts the answer rested on. **Both were false.** The verdict
 > reversed, and the reasoning that pointed the wrong way was kept intact rather than rewritten.
 
-This is the case study for the least comfortable rule in the system: **a debate produces a
-hypothesis, not a decision.** The decision comes after someone measures.
+This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
+production code written by coding agents. For decisions that are expensive to reverse, the
+workflow doesn't ask one agent for an answer — it spawns several, each drafting a complete proposal
+through a different professional lens before seeing the others', then has them cross-examine each
+other in writing. The theory is that independent perspectives catch what a single context window
+can't. This essay is the case study for what that theory misses, and for the least comfortable rule
+in the system: **a debate produces a hypothesis, not a decision.** The decision comes after someone
+measures.
 
 ---
 
@@ -14,25 +24,25 @@ hypothesis, not a decision.** The decision comes after someone measures.
 A shell-level theming question — where a site-wide brand color should be sourced from. Four
 independent lenses, each drafting blind before seeing the others:
 
-| Lens | Brief |
-|---|---|
-| **Architect** | Abstraction altitude, coupling, where the branch belongs |
-| **Sanity-model** | The content model and the CMS↔code contract |
-| **Framework-fit** | What the *installed* framework version actually sanctions |
+| Lens                 | Brief                                                                     |
+| -------------------- | ------------------------------------------------------------------------- |
+| **Architect**        | Abstraction altitude, coupling, where the branch belongs                  |
+| **Sanity-model**     | The content model and the CMS↔code contract                               |
+| **Framework-fit**    | What the _installed_ framework version actually sanctions                 |
 | **Devil's advocate** | A standing seat, whose job is to argue the opposing case at full strength |
 
 Round 1 was written in isolation. Round 2 was adversarial — each lens challenging, defending, or
 conceding against the others in writing.
 
-The debate converged on a code-config approach. The reasoning rested on two load-bearing claims:
-that the visual flash being fixed was a real user-facing defect, and that a framework constraint
-made the alternative unworkable.
+The debate converged on a code-config approach — source the brand from code rather than from the
+CMS. The reasoning rested on two load-bearing claims: that the visual flash being fixed was a real
+user-facing defect, and that a framework constraint made the alternative unworkable.
 
 ## The devil's advocate did its job first
 
-Before the reversal, the standing critic wrote the strongest possible case *against* doing
-anything at all — and it is worth reading because it argues honestly against the position its
-own author preferred:
+Before the reversal, the devil's-advocate agent wrote the strongest possible case _against_ doing
+anything at all — and it is worth reading because the agent argues, at full strength, for the
+opposite of what it believed:
 
 > ## 1. The "do nothing" case — at full strength
 >
@@ -55,19 +65,21 @@ Then it gave its own verdict against itself:
 > nothing," but **steal its discipline** — whatever we build must be _simpler_ than what's
 > there, not a lateral move […].
 
-Note what it surfaced in the course of losing: **production had zero unbranded frames.** The
-flash was dev-only. The critic did not measure that itself — it **cited an existing measurement**
+The remarkable thing is what it surfaced in the course of losing: **production had zero unbranded
+frames.** The flash was dev-only. The critic did not measure that itself — it **cited an existing
+measurement**
 from an earlier spike commit, and pulled it into the argument where nobody had weighted it. That
-is the thread that unravelled the verdict, and it surfaced because the seat's rule is *every
-challenge must cite a source*.
+is the thread that unraveled the verdict, and it surfaced because the seat's rule is _every
+challenge must cite a source_.
 
 ## Then the spike ran
 
 Rather than let predictions duel, the load-bearing claims were tested. The spike document is the
-most self-critical artifact in the whole archive, because it corrects **its own author** twice:
+most self-critical artifact in the whole archive, because the agent that wrote it corrects
+**itself** twice:
 
 > Two passes: a first synchronous-shell spike, then — **prompted by the driver's question "did
-> you test the *current* implementation on prod+draft?"** — three **controls** (A/B/C) that
+> you test the _current_ implementation on prod+draft?"** — three **controls** (A/B/C) that
 > **corrected two of my own conclusions.** Read the controls; they supersede the first pass
 > where they conflict.
 >
@@ -78,7 +90,7 @@ And on the framework claim everyone had accepted:
 
 > My first pass guessed the predicted error didn't fire because `VisualEditingControls` licenses
 > the metadata read. **I tested that guess and it is wrong.** So **nothing** was licensing it —
-> the existing comment's *"remove this boundary and `generateMetadata` throws…"* is **not what
+> the existing comment's _"remove this boundary and `generateMetadata` throws…"_ is **not what
 > happens.**
 
 It also scoped its own refutation honestly instead of overclaiming:
@@ -92,14 +104,14 @@ It also scoped its own refutation honestly instead of overclaiming:
 
 > The debate first reached a **code-config** verdict. Then the spike showed (a) the flash is
 > **dev-only** — prod was already clean, and (b) the framework blocker **doesn't exist**; and
-> the **islands** frame showed the shell brand is *editorial content, not a constant*, so the
+> the **islands** frame showed the shell brand is _editorial content, not a constant_, so the
 > "wrong shape" premise dissolved. **Both pillars of the config verdict fell.**
 
-The debate had been sound *on its premises*. The premises were wrong. Four capable agents
+The debate had been sound _on its premises_. The premises were wrong. Four capable agents
 cross-examining each other did not overturn them, because **nobody ran the control** — the
 current implementation, on a production build, under draft. They reasoned from a shared,
-unverified starting point, and adversarial debate sharpens reasoning without ever testing its
-inputs. The one measurement already in the room, cited by the critic, was not enough on its own to
+unverified starting point, and **adversarial debate sharpens reasoning without ever testing its
+inputs.** The one measurement already in the room, cited by the critic, was not enough on its own to
 move the verdict; it took someone going and running the missing test.
 
 ## What was kept
@@ -122,8 +134,8 @@ From the session's own method note:
 > facts independently** and **fed them back** so the debate — and the reversal — ran on
 > **measured ground truth, not inference.**
 
-That is the lead's actual job. Not adjudicating who argued best — **finding the claim everyone
-is standing on and going to check it.**
+That is the actual job of the lead agent running the debate. Not adjudicating who argued best —
+**finding the claim everyone is standing on and going to check it.**
 
 The same move appears in another debate the same week, where two lenses had opposite predictions
 about runtime behavior:
@@ -132,9 +144,9 @@ about runtime behavior:
 > the lead reproduced real Draft Mode and tested. **ShellGuardian CORRECT, FrameworkFit REFUTED**
 > **on the narrow claim** […] **But ShellGuardian also CORRECT that it's only half a fix.**
 
-Note how narrow the adjudication is — one lens refuted *on one claim*, while the lens that won
+The adjudication is deliberately narrow — one lens refuted _on one claim_, while the lens that won
 that point is told in the same breath that its own fix is incomplete. Two positions changed in
-writing after that. One lens withdrew both its objection *and* its own preferred fix.
+writing after that. One lens withdrew both its objection _and_ its own preferred fix.
 
 ---
 
@@ -159,3 +171,18 @@ run that measurement; it went and found one, because the seat's binding rule is 
 challenge must cite a source. A devil's advocate that only performs skepticism never turns
 anything up. The citation requirement is what makes the seat an instrument rather than an
 obstacle.
+
+---
+
+The full record is public in the source repo's retired session archive: the four blind drafts,
+both debate rounds, the spike's controls, and the synthesis that preserves the superseded
+reasoning are at [`2026-06-26-shell-sourcing-islands`][record], and the draft-preview debate
+quoted alongside it at [`2026-06-25-item-c-draft-preview-debate`][record2]. The `[D#]`
+references are entries in the decision register retired with them ([`e7a7232`][tree]).
+
+[record]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs/sessions/2026-06-26-shell-sourcing-islands
+[record2]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs/sessions/2026-06-25-item-c-draft-preview-debate
+[tree]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs
+
+The distilled rule is [A debate produces a hypothesis rather than a decision](/notes/debate-produces-a-hypothesis/); the system it belongs to is
+[Directing AI agents](/essays/directing-agents/).

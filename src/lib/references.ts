@@ -1,6 +1,7 @@
 import { getCollection } from "astro:content";
 import {
   buildReferenceIndex,
+  entryFormatFromPath,
   referenceKey,
   type Backlink,
   type LinkedCollection,
@@ -24,6 +25,7 @@ async function buildIndex(): Promise<Map<string, Backlink[]>> {
     id: entry.id,
     title: entry.data.title,
     body: entry.body ?? "",
+    format: entryFormatFromPath(entry.filePath),
   }));
   return buildReferenceIndex(entries);
 }

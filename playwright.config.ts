@@ -2,6 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "e2e",
+  // A committed `test.only` would otherwise let CI pass while silently
+  // running a single test.
+  forbidOnly: !!process.env.CI,
   use: {
     baseURL: "http://localhost:4321",
   },

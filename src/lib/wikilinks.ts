@@ -1,5 +1,5 @@
 import { slug } from "github-slugger";
-import { unified, type Processor } from "unified";
+import { unified } from "unified";
 import remarkParse from "remark-parse";
 import { visit } from "unist-util-visit";
 import { wikiLinkPlugin } from "remark-wiki-link";
@@ -31,9 +31,7 @@ interface WikiLinkNode extends Node {
   value: string;
 }
 
-const parser: Processor = unified()
-  .use(remarkParse)
-  .use(wikiLinkPlugin, wikiLinkOptions);
+const parser = unified().use(remarkParse).use(wikiLinkPlugin, wikiLinkOptions);
 
 /**
  * Extraction runs the real parser, not a regex, so the backlink index counts

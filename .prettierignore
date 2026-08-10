@@ -1,6 +1,6 @@
 dist/
 .astro/
-package-lock.json
+pnpm-lock.yaml
 
 # Agent-team worktrees — full repo checkouts under this runtime dir, so
 # `prettier --check .` would otherwise walk a second copy of every source file.

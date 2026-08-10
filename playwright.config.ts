@@ -13,7 +13,9 @@ export default defineConfig({
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {
-    command: `npm run preview -- --port ${PREVIEW_PORT}`,
+    // No `--` separator: npm strips it before forwarding, pnpm passes it
+    // through literally and `astro preview -- --port` is not a valid command.
+    command: `pnpm run preview --port ${PREVIEW_PORT}`,
     url: `http://localhost:${PREVIEW_PORT}/`,
     timeout: 120 * 1000,
     // Playwright only ever probes `url` above, so nothing here can reach the

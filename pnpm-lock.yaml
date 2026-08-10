@@ -42,18 +42,27 @@ importers:
       '@astrojs/check':
         specifier: ^0.9.10
         version: 0.9.10(prettier-plugin-astro@0.14.1)(prettier@3.9.6)(typescript@6.0.3)
+      '@mdx-js/mdx':
+        specifier: ^3.1.1
+        version: 3.1.1
       '@playwright/test':
         specifier: ^1.62.1
         version: 1.62.1
       '@types/hast':
         specifier: ^3.0.5
         version: 3.0.5
+      '@types/unist':
+        specifier: ^3.0.3
+        version: 3.0.3
       prettier:
         specifier: ^3.9.6
         version: 3.9.6
       prettier-plugin-astro:
         specifier: ^0.14.1
         version: 0.14.1
+      rehype-raw:
+        specifier: ^7.0.0
+        version: 7.0.0
       rehype-stringify:
         specifier: ^10.0.1
         version: 10.0.1

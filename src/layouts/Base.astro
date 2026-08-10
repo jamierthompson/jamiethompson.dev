@@ -1,10 +1,72 @@
 ---
+import { SITE_URL } from "../lib/site";
+
 interface Props {
   title: string;
   description?: string;
 }
 
 const { title, description } = Astro.props;
+
+// `astro check` guards the typed call sites, but nothing enforces props at
+// runtime, so a missing title would otherwise die inside `endsWith` — or ship
+// as `<title>undefined</title>`.
+if (typeof title !== "string") {
+  throw new Error("<Base> requires a title.");
+}
+
+/**
+ * Whitespace is not a description. `description` is `z.string()` in
+ * `src/content.config.ts` with no minimum, so `"   "` is schema-valid and a
+ * bare `description &&` would ship both tags blank — and a crawler reads an
+ * empty `og:description` and believes it.
+ */
+const pageDescription = description?.trim();
+
+/**
+ * Only the pathname is taken: the build's origin comes from `site`, but
+ * `astro dev` and `astro preview` serve from localhost, and a canonical that
+ * points at localhost is worse than none at all.
+ */
+const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
+
+/**
+ * `og:site_name` names the site and `og:title` names the page (ogp.me
+ * §Optional Metadata), so the suffix is dropped for the card and kept in
+ * `<title>`. The index title genuinely is the site name; there is no special
+ * case for it.
+ */
+const SITE_NAME = "Jamie Thompson";
+const TITLE_SUFFIX = ` — ${SITE_NAME}`;
+const pageTitle = (
+  title.endsWith(TITLE_SUFFIX) ? title.slice(0, -TITLE_SUFFIX.length) : title
+).trim();
+/**
+ * `og:title` is required (ogp.me §Basic Metadata) and nothing guarantees a
+ * title survives having the suffix cut off it: `title` is `z.string()` in
+ * `src/content.config.ts` with no minimum, so `""`, `"   "` and
+ * `" — Jamie Thompson"` all reduce to nothing. Failing the build is the point
+ * — a page titled after the site is a typo that would otherwise ship.
+ */
+if (pageTitle === "") {
+  throw new Error(
+    `<Base> got the title "${title}", which is nothing once the "${TITLE_SUFFIX}" suffix is taken off it. A page needs a title of its own.`,
+  );
+}
+
+/**
+ * `website` is the Open Graph default (ogp.me §Object Types), and it is all
+ * this layout can honestly claim: it cannot tell an essay from an index, and
+ * `article` would need a prop no call site passes yet.
+ */
+const OG_TYPE = "website";
+
+/**
+ * `summary`, not `summary_large_image`: there is no image asset in this repo
+ * and no `og:image` (issue #5). A large-image card with no image renders as a
+ * blank panel, which is worse than the small card the crawler falls back to.
+ */
+const TWITTER_CARD = "summary";
 ---
 
 <!doctype html>
@@ -14,6 +76,18 @@ const { title, description } = Astro.props;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="canonical" href={canonicalUrl} />
+    {pageDescription && <meta name="description" content={pageDescription} />}
+    <meta property="og:type" content={OG_TYPE} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:title" content={pageTitle} />
+    {
+      pageDescription && (
+        <meta property="og:description" content={pageDescription} />
+      )
+    }
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta name="twitter:card" content={TWITTER_CARD} />
     <title>{title}</title>
   </head>
   <body>

@@ -115,13 +115,13 @@ const slotted = Astro.slots.has("default")
  * uses an `aria-label` only "if it is not empty after trimming", so an empty
  * one names nothing and the computation falls through to the empty contents.
  */
-const labelled = passed.some((name) => {
+const labeled = passed.some((name) => {
   if (!NAME_ATTRIBUTES.has(name.toLowerCase())) return false;
   const value: unknown = (rest as Record<string, unknown>)[name];
   return typeof value === "string" && value.trim() !== "";
 });
 
-if (slotted.trim() === "" && !labelled) {
+if (slotted.trim() === "" && !labeled) {
   throw new Error(
     `<ExternalLink href="${href}"> has no link text. A link needs a name that says where it goes.`,
   );

@@ -1,16 +1,12 @@
 # jamiethompson.dev
 
-Where I write about the things I build: experiments with their data, short backlinked
-notes, and longer essays. Built with [Astro](https://astro.build).
-
-Three content types, three jobs: **experiments** (living pages — hypothesis, data, outcome),
-**notes** (one idea each), **essays** (the longer arguments
-and case studies).
+Where I write about the things I build: short notes and longer essays.
+Built with [Astro](https://astro.build).
 
 ## Stack
 
 - **Astro** — static output; interactive islands only where a page embeds a demo
-- **Content collections** — `experiments/`, `essays/`, `notes/` as markdown/MDX with typed frontmatter
+- **Content collections** — `essays/` and `notes/` as markdown/MDX with typed frontmatter
 - **Wikilinks** — `[[slug]]` links resolve to notes, with a build-time backlink index
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)
 
@@ -53,6 +49,10 @@ Vercel's build-and-deploy check.
 
 ```
 src/
-  content/         # essays and notes (the actual writing)
-  pages/           # routes
+  components/       # shared components
+  content/          # essays and notes (the actual writing)
+  content.config.ts # the collection schemas
+  layouts/          # the page shell — head tags, nav, tokens
+  lib/              # build-time helpers, tests beside them
+  pages/            # routes
 ```

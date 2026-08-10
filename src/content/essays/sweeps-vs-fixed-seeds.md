@@ -1,11 +1,7 @@
 ---
 title: "Hand-picked test values only prove the cases you thought of"
 description: 'A test fixture labeled "assorted seed hues spanning the wheel" held six values, all passing. A seventh — ten degrees from one already in the list — failed the suite''s own tolerance. Why fixed fixtures flatter the code they test, and what a 190,000-combination sweep found instead.'
-hypothesis: "A hand-picked fixture of 'assorted' values stands in for the space it claims to sample."
-status: "concluded"
-started: 2026-07-01
-concluded: 2026-08-06
-repo: "https://github.com/jamierthompson/digital-garden"
+pubDate: 2026-08-07
 ---
 
 > A test file declared its constants as _"Assorted seed hues spanning the wheel, incl. the

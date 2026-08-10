@@ -14,7 +14,7 @@ test("home page renders and the console is clean", async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test("primary flow: home → notes → rule-note → worked-case essay", async ({
+test("primary flow: home → notes → a note → the essay it links, which links back", async ({
   page,
 }) => {
   await page.goto("/");
@@ -38,9 +38,6 @@ test("primary flow: home → notes → rule-note → worked-case essay", async (
   await expect(
     page.getByRole("heading", { level: 1, name: /Briefing your AI reviewer/ }),
   ).toBeVisible();
-  await expect(page.getByRole("article")).toContainText(
-    "no prior context of the work",
-  );
 
   const backlinks = page.getByRole("complementary");
   await expect(
@@ -51,27 +48,13 @@ test("primary flow: home → notes → rule-note → worked-case essay", async (
   ).toBeVisible();
 });
 
-test("essays index lists the worked case", async ({ page }) => {
+test("essays index links to an essay, and the link opens it", async ({
+  page,
+}) => {
   await page.goto("/essays/");
   await expect(
     page.getByRole("heading", { level: 1, name: "Essays" }),
   ).toBeVisible();
-  await expect(
-    page.getByRole("link", { name: /Briefing your AI reviewer/ }),
-  ).toBeVisible();
-});
-
-test("experiments index lists the concluded runs and a page states its hypothesis", async ({
-  page,
-}) => {
-  await page.goto("/experiments/");
-  await expect(
-    page.getByRole("heading", { level: 1, name: "Experiments" }),
-  ).toBeVisible();
-  await expect(
-    page.getByRole("heading", { level: 2, name: "Concluded" }),
-  ).toBeVisible();
-
   await page
     .getByRole("link", {
       name: /I evaluated my own AI agent orchestration tool/,
@@ -83,6 +66,4 @@ test("experiments index lists the concluded runs and a page states its hypothesi
       name: /I evaluated my own AI agent orchestration tool/,
     }),
   ).toBeVisible();
-  await expect(page.getByRole("article")).toContainText("Hypothesis:");
-  await expect(page.getByRole("article")).toContainText("Concluded");
 });

@@ -3,9 +3,6 @@ import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
 import ExternalLink from "../components/ExternalLink.astro";
 
-const experiments = (
-  await getCollection("experiments", ({ data }) => !data.draft)
-).sort((a, b) => b.data.started.valueOf() - a.data.started.valueOf());
 const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
@@ -16,15 +13,14 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
 
 <Base
   title="Jamie Thompson"
-  description="Writing about the things I build: experiments with published data, short notes, and long-form essays."
+  description="Writing about the things I build: short notes holding one idea each, and long-form essays."
 >
   <h1>Jamie Thompson</h1>
   <p>
     I'm a software engineer, and this is where I write about the things I build,
-    in three forms. <a href="/experiments/">Experiments</a> run against a stated hypothesis
-    and publish the data — including the runs that lost. <a href="/notes/"
-      >Notes</a
-    > hold one idea each, and <a href="/essays/">essays</a> make the longer arguments.
+    in two forms. <a href="/notes/">Notes</a> hold one idea each, written when I run
+    into it. <a href="/essays/">Essays</a> make the longer arguments, usually out
+    of notes that piled up first.
   </p>
   <p>
     Start with{" "}
@@ -36,24 +32,6 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
       >agent-conventions</ExternalLink
     >. That system is the first body of work here, not the last.
   </p>
-
-  {
-    experiments.length > 0 && (
-      <section>
-        <h2>Experiments</h2>
-        <ul>
-          {experiments.slice(0, 5).map((experiment) => (
-            <li>
-              <a href={`/experiments/${experiment.id}/`}>
-                {experiment.data.title}
-              </a>
-              <span class="muted"> — {experiment.data.status}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-    )
-  }
 
   {
     notes.length > 0 && (

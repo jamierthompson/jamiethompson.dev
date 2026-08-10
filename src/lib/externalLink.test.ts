@@ -481,7 +481,7 @@ describe("the markdown surface marks what the rule calls leaving", () => {
     expect(anchor.target).toBeNull();
   });
 
-  it("marks a reference-style link, the style the essays use", async () => {
+  it("marks a reference-style link", async () => {
     const anchor = await renderAnchor(
       "see [the repo][repo]\n\n[repo]: https://github.com/jamierthompson/x",
     );

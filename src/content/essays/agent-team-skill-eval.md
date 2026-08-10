@@ -1,11 +1,7 @@
 ---
 title: "I evaluated my own AI agent orchestration tool and it lost twice"
 description: "With-skill vs. an uncontaminated baseline, four prompts, two carrying deliberate traps. The baseline beat the skill in two specific ways; both losses became edits before merge. Two runs died to an outage and are reported as inferred, not measured."
-hypothesis: "A session with the agent-team skill produces a better team-lead orchestration plan than a session without it."
-status: "concluded"
-started: 2026-06-23
-concluded: 2026-06-25
-repo: "https://github.com/jamierthompson/agent-conventions"
+pubDate: 2026-08-07
 ---
 
 > A prompt or a skill is a system whose behavior you should **measure**, not vibe-check. So

@@ -91,12 +91,14 @@ test.describe("the contract, across every built page", () => {
   }) => {
     // The test above uses `isExternalHref` as its own oracle, so a rule that
     // regressed to always returning false would pass it with nothing checked.
+    // The floor is deliberately far below the real count: it catches a plugin
+    // that stopped marking, not a week's worth of ordinary link edits.
     let marked = 0;
     for (const route of routes) {
       await page.goto(route);
       marked += await page.locator("a[data-external]").count();
     }
-    expect(marked).toBeGreaterThan(20);
+    expect(marked).toBeGreaterThan(10);
   });
 
   test("every marked link has an accessible name", async ({ page }) => {
@@ -571,18 +573,7 @@ test.describe("target size", () => {
   });
 });
 
-test.describe("the ExternalLink call sites", () => {
-  test("the component call site on an experiment page renders the contract", async ({
-    page,
-  }) => {
-    // `[slug].astro` is the second ExternalLink call site.
-    await page.goto("/experiments/agent-team-skill-eval/");
-    const link = page.getByRole("link", { name: "repository", exact: true });
-    await expect(link).toHaveAttribute("data-external", "");
-    await expect(link).not.toHaveAttribute("target", /.*/);
-    await expect(link).not.toHaveAttribute("rel", /.*/);
-  });
-
+test.describe("activation", () => {
   test("activating an external link stays in the same tab", async ({
     page,
     context,

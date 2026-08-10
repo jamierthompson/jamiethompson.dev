@@ -7,12 +7,9 @@ const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
 );
 ---
 
-<Base
-  title="Notes — Jamie Thompson"
-  description="Short notes — one idea each: a rule, a lesson, an observation."
->
+<Base title="Notes — Jamie Thompson" description="Short notes — one idea each.">
   <h1>Notes</h1>
-  <p>One idea each — a rule, a lesson, an observation.</p>
+  <p>One idea each.</p>
   <ul>
     {
       notes.map((note) => (

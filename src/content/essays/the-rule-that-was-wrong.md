@@ -1,6 +1,6 @@
 ---
 title: "My requirement was the bug and every AI agent served it faithfully"
-description: "A QA agent filed a defect it couldn't test, because a live test would hang the suite. That was my own requirement contradicting itself — and it had sat for 24 days."
+description: "A QA agent filed a defect it couldn't test: a live test would hang the suite. That was my own requirement contradicting itself — and it had sat for 24 days."
 pubDate: 2026-08-07
 ---
 

@@ -1,17 +1,13 @@
 ---
 title: "Briefing your AI reviewer turns it into a second author"
-description:
-  "The QA rule was written and failed the same day. A briefed-but-fresh reviewer confirmed a
-  design and found nothing; an unbriefed one found a ship-blocking regression behind a fully
-  green gate — and a guard test structurally incapable of failing."
+description: "The QA rule failed the day it was written: a briefed reviewer confirmed the design; an unbriefed one found a ship-blocking regression behind a fully green gate."
 pubDate: 2026-08-07
 ---
 
-This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
-production code written by coding agents. The workflow splits work into slices: one agent builds
-a slice, an automated gate (format, lint, types, tests, build) runs over it, and then — the subject
-of this essay — a separate agent tries to break it before I read it. This is the story of how the
-exact wording of that last step turned out to be load-bearing.
+[The system I use to ship production code I didn't write](/essays/directing-agents/) splits work
+into slices: one agent builds a slice, an automated gate — format, lint, types, tests, build — runs
+over it, and then a separate agent tries to break it before I read it. This essay is about that
+last step, and how its exact wording turned out to be load-bearing.
 
 **The rule:** before a slice enters a pull request, a fresh agent with **no prior context of the
 work** tries to break it.
@@ -158,6 +154,10 @@ A primed reviewer and an unprimed one read the same slice minutes apart and prod
 the design" and "a broken gate plus an untested security guarantee." The next day the same
 pattern turned up in the author's seat. Two demonstrations, two shapes.
 
+None of this catches a requirement that was wrong to begin with: QA attacks the work against the
+requirements, so when the requirement is the defect it gets enforced rather than caught. I watched
+that for [24 days under a rule I wrote myself](/essays/the-rule-that-was-wrong/).
+
 The build this happened on is archived, but its receipts stay public: the pull requests and
 commit history are at [github.com/jamierthompson/digital-garden][repo]. The decision and session
 records quoted here were retired from `main` on June 30, 2026; read them at [`e7a7232`][retired].
@@ -166,5 +166,4 @@ records quoted here were retired from `main` on June 30, 2026; read them at [`e7
 [repo]: https://github.com/jamierthompson/digital-garden
 [retired]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs
 
-The distilled rule is [Your AI reviewer must have no prior context of the work](/notes/no-prior-context/); the system it belongs to is
-[Directing AI agents](/essays/directing-agents/).
+The rule: [Your AI reviewer must have no prior context of the work](/notes/no-prior-context/).

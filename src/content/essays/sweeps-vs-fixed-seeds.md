@@ -1,11 +1,7 @@
 ---
 title: "Hand-picked test values only prove the cases you thought of"
-description: 'A test fixture labeled "assorted seed hues spanning the wheel" held six values, all passing. A seventh — ten degrees from one already in the list — failed the suite''s own tolerance. Why fixed fixtures flatter the code they test, and what a 190,000-combination sweep found instead.'
-hypothesis: "A hand-picked fixture of 'assorted' values stands in for the space it claims to sample."
-status: "concluded"
-started: 2026-07-01
-concluded: 2026-08-06
-repo: "https://github.com/jamierthompson/digital-garden"
+description: "Six “assorted” hues, all passing. A seventh, ten degrees away, broke the suite's own tolerance — and a 190,000-combination sweep found what it never could."
+pubDate: 2026-08-07
 ---
 
 > A test file declared its constants as _"Assorted seed hues spanning the wheel, incl. the
@@ -14,12 +10,12 @@ repo: "https://github.com/jamierthompson/digital-garden"
 >
 > The fixture wasn't sampling the wheel. It was, functionally, the set of hues that pass.
 
-This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
-production code written by coding agents. The code under test is a color engine that solves
-palettes against accessibility-contrast targets, and an independent QA pass noticed something
-unsettling about its test suite: **it was green, and it was lying.** This is the case about **what a
-test's inputs are actually proving** — the quiet assumption underneath every fixed fixture that the
-handful of values you chose stand in for the space you didn't.
+The code under test is a color engine that solves palettes against accessibility-contrast targets,
+and an independent QA pass — the step [my workflow](/essays/directing-agents/) puts between an
+agent's work and my review — noticed something unsettling about its test suite: **it was green, and
+it was lying.** This is the case about **what a test's inputs are actually proving** — the quiet
+assumption underneath every fixed fixture that the handful of values you chose stand in for the
+space you didn't.
 
 ---
 
@@ -143,7 +139,9 @@ findings credible.
 
 **A fixture is a claim about a space, and it is usually wrong.** Six hues do not span a wheel; five
 seeds do not span a color space. If the assertion is about all inputs, sweep. If sweeping is too
-slow, sweep in one place and say in the fixed tests that they are examples, not coverage.
+slow, sweep in one place and say in the fixed tests that they are examples, not coverage. An
+argument samples its space the same way: four agents once cross-examined each other into a verdict
+that [rested on two facts nobody had checked](/essays/the-reversal/).
 
 **"Assorted" is a smell.** Any constant list needs a stated selection rule. If the only justification
 is that the values look varied, they were chosen by the same intuition that wrote the code — and
@@ -159,7 +157,9 @@ of bug lives.
 The fixture never lied. It answered exactly the questions it was given — honestly, six at a time,
 for weeks — because that is all a green suite ever does. The fix was never a better list of hues.
 It was **taking the choice of questions away from the intuition that wrote the answers**: a
-generated sweep with a stated selection rule, and a reviewing agent with no stake in the outcome. The rule
-this case distilled is
-[A fixed list of assorted constants is a smell](/notes/assorted-is-a-smell/); the system that put
-that reviewer in the room is [Directing AI agents](/essays/directing-agents/).
+generated sweep with a stated selection rule, and a reviewing agent with no stake in the outcome.
+
+The engine is archived with
+[digital-garden](https://github.com/jamierthompson/digital-garden), where the commits above and the
+suite that replaced the fixture stay readable.
+The rule: [A fixed list of assorted constants is a smell](/notes/assorted-is-a-smell/).

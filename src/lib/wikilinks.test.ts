@@ -216,10 +216,10 @@ describe("wikilinks nested inside other markdown still count", () => {
 });
 
 describe("MDX bodies go through the same extractor as markdown", () => {
-  // The notes/essays/experiments loaders all glob `*.{md,mdx}`, and
-  // `entry.body` for an .mdx file is raw MDX. `extractWikiTargets` parses it
-  // with a markdown-only pipeline, so JSX array-of-array props tokenize as
-  // wikilinks that the rendered page never contains.
+  // The collection loaders glob `*.{md,mdx}`, and `entry.body` for an .mdx
+  // file is raw MDX. `extractWikiTargets` parses it with a markdown-only
+  // pipeline, so JSX array-of-array props tokenize as wikilinks that the
+  // rendered page never contains.
   it("does not read a JSX array-of-arrays prop as a wikilink", () => {
     expect(
       extractWikiTargets('<Chart series={[[ "The QA Rule" ]]} />'),
@@ -234,7 +234,7 @@ describe("MDX bodies go through the same extractor as markdown", () => {
     const index = buildBacklinkIndex([
       { collection: "notes", id: "the-qa-rule", title: "Rule", body: "prose" },
       {
-        collection: "experiments",
+        collection: "essays",
         id: "chart",
         title: "Chart",
         body: '<Chart labels={[[ "The QA Rule" ]]} />',
@@ -283,20 +283,28 @@ describe("a declared format parses by that grammar", () => {
 describe("extractInternalLinkTargets", () => {
   it("finds links into every collection, with or without trailing slash", () => {
     const md =
-      "Read [the essay](/essays/the-qa-rule/), [a note](/notes/no-prior-context) " +
-      "and [the run](/experiments/agent-team-skill-eval/).";
+      "Read [the essay](/essays/the-qa-rule/) and " +
+      "[a note](/notes/no-prior-context).";
     expect(extractInternalLinkTargets(md)).toEqual([
       "essays/the-qa-rule",
       "notes/no-prior-context",
-      "experiments/agent-team-skill-eval",
     ]);
   });
 
-  it("ignores external URLs, index pages, and unknown paths", () => {
+  it("ignores external URLs, a collection index, and the home page", () => {
     const md =
       "See [GitHub](https://github.com/jamierthompson/digital-garden), " +
-      "[all notes](/notes/), and [about](/about/).";
+      "[all notes](/notes/), and [home](/).";
     expect(extractInternalLinkTargets(md)).toEqual([]);
+  });
+
+  it("ignores an entry-shaped path under a name that is not a collection", () => {
+    // Every path above is refused on shape, before the collection alternation
+    // is consulted at all. This one has the two segments of a real entry, so
+    // the alternation is the only thing left that can reject it.
+    expect(
+      extractInternalLinkTargets("[a recipe](/recipes/a-recipe/)"),
+    ).toEqual([]);
   });
 
   it("ignores links inside code fences and inline code", () => {
@@ -329,8 +337,8 @@ describe("extractInternalLinkTargets", () => {
 
   it("counts a link carrying a query string", () => {
     expect(
-      extractInternalLinkTargets("[the run](/experiments/the-eval/?tab=data)"),
-    ).toEqual(["experiments/the-eval"]);
+      extractInternalLinkTargets("[the run](/essays/the-eval/?tab=data)"),
+    ).toEqual(["essays/the-eval"]);
   });
 });
 
@@ -409,16 +417,12 @@ describe("buildReferenceIndex", () => {
     ]);
   });
 
-  it("indexes internal-link references to essays and experiments", () => {
+  it("indexes internal-link references to notes and essays alike", () => {
     const index = buildReferenceIndex([
-      entry(
-        "notes",
-        "a-note",
-        "full run at [the eval](/experiments/the-eval/)",
-      ),
+      entry("notes", "a-note", "stated in [the note](/notes/the-note/)"),
       entry("notes", "b-note", "argued in [the essay](/essays/the-essay/)"),
     ]);
-    expect(index.get(referenceKey("experiments", "the-eval"))).toEqual([
+    expect(index.get(referenceKey("notes", "the-note"))).toEqual([
       { collection: "notes", id: "a-note", title: "title:a-note" },
     ]);
     expect(index.get(referenceKey("essays", "the-essay"))).toEqual([
@@ -443,10 +447,10 @@ describe("buildReferenceIndex", () => {
   it("does not conflate same ids across collections", () => {
     const index = buildReferenceIndex([
       entry("notes", "a", "[link](/essays/shared/)"),
-      entry("notes", "b", "[link](/experiments/shared/)"),
+      entry("notes", "b", "[link](/notes/shared/)"),
     ]);
     expect(index.get(referenceKey("essays", "shared"))).toHaveLength(1);
-    expect(index.get(referenceKey("experiments", "shared"))).toHaveLength(1);
+    expect(index.get(referenceKey("notes", "shared"))).toHaveLength(1);
   });
 
   it("gives the target a Referenced by row when the link is anchored", () => {

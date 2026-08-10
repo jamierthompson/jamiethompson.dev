@@ -14,7 +14,7 @@ const routes = readdirSync("dist", { recursive: true })
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
 
 /** A route with a path segment, where a relative canonical would show up. */
-const NESTED_ROUTE = "/experiments/agent-team-skill-eval/";
+const NESTED_ROUTE = "/essays/agent-team-skill-eval/";
 const NESTED_TITLE =
   "I evaluated my own AI agent orchestration tool and it lost twice";
 /** The suffix every page but the index appends to its `<title>`. */
@@ -99,7 +99,7 @@ test.describe("the canonical URL", () => {
         );
       }
       // `new URL(pathname, SITE_URL)` cannot double a slash, but a later switch
-      // to string concatenation could, and `//experiments/` is a different page.
+      // to string concatenation could, and `//notes/` is a different page.
       if (head.canonical && /(?<!:)\/\//.test(head.canonical)) {
         violations.push(`${route}: canonical has a doubled slash`);
       }
@@ -192,8 +192,7 @@ test.describe("the card", () => {
   test("the card claims the small summary, not an image it does not have", async ({
     page,
   }) => {
-    // `summary_large_image` with no `og:image` renders as a blank panel. When an
-    // image lands (issue #5) this is the test that has to be updated with it.
+    // `summary_large_image` with no `og:image` renders as a blank panel.
     const withImage: string[] = [];
     for (const route of routes) {
       await page.goto(route);

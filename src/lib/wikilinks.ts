@@ -114,7 +114,7 @@ export function extractWikiTargets(
   });
 }
 
-export type LinkedCollection = "essays" | "notes" | "experiments";
+export type LinkedCollection = "essays" | "notes";
 
 export interface LinkedEntry {
   collection: LinkedCollection;
@@ -168,8 +168,7 @@ export function referenceKey(collection: LinkedCollection, id: string): string {
  * so it is part of the URL but not part of the id — it is matched and
  * discarded rather than allowed to fail the whole match.
  */
-const INTERNAL_LINK_PATTERN =
-  /^\/(essays|notes|experiments)\/([^/#?]+)\/?(?:[#?].*)?$/;
+const INTERNAL_LINK_PATTERN = /^\/(essays|notes)\/([^/#?]+)\/?(?:[#?].*)?$/;
 
 interface MarkdownLinkNode extends Node {
   url: string;
@@ -181,8 +180,8 @@ interface MarkdownLinkNode extends Node {
  * A fragment or query is stripped, so `/notes/a-note/#the-part` references
  * `notes/a-note` — the page renders one cross-reference either way. What
  * never matches is a link that names no single entry: an index page
- * (`/notes/`), a path outside the three collections (`/about/`), a deeper
- * path (`/notes/a/b/`), and any external URL.
+ * (`/notes/`), a path outside the linked collections, a deeper path
+ * (`/notes/a/b/`), and any external URL.
  */
 export function extractInternalLinkTargets(
   body: string,

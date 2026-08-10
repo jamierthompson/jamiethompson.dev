@@ -1,6 +1,6 @@
 ---
 title: "Four AI agents debated to a verdict and one measurement overturned it"
-description: "Four AI agents drafted a design decision independently, cross-examined each other, and converged. A spike then tested the two facts the verdict rested on; both were false. Why adversarial debate can't catch a premise every participant shares — and why the losing reasoning was kept."
+description: "Four AI agents drafted independently, cross-examined each other, and converged. A spike then tested the two facts the verdict rested on; both were false."
 pubDate: 2026-08-07
 ---
 
@@ -8,13 +8,12 @@ pubDate: 2026-08-07
 > spike then tested the two facts the answer rested on. **Both were false.** The verdict
 > reversed, and the reasoning that pointed the wrong way was kept intact rather than rewritten.
 
-This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
-production code written by coding agents. For decisions that are expensive to reverse, the
-workflow doesn't ask one agent for an answer — it spawns several, each drafting a complete proposal
-through a different professional lens before seeing the others', then has them cross-examine each
-other in writing. The theory is that independent perspectives catch what a single context window
-can't. This essay is the case study for what that theory misses, and for the least comfortable rule
-in the system: **a debate produces a hypothesis, not a decision.** The decision comes after someone
+For decisions that are expensive to reverse, [my agent workflow](/essays/directing-agents/) doesn't
+ask one agent for an answer. It spawns several, each drafting a complete proposal through a
+different professional lens before seeing the others', then has them cross-examine each other in
+writing. The theory is that independent perspectives catch what a single context window can't.
+This essay is the case study for what that theory misses, and for the least comfortable rule in the
+system: **a debate produces a hypothesis, not a decision.** The decision comes after someone
 measures.
 
 ---
@@ -67,10 +66,9 @@ Then it gave its own verdict against itself:
 
 The remarkable thing is what it surfaced in the course of losing: **production had zero unbranded
 frames.** The flash was dev-only. The critic did not measure that itself — it **cited an existing
-measurement**
-from an earlier spike commit, and pulled it into the argument where nobody had weighted it. That
-is the thread that unraveled the verdict, and it surfaced because the seat's rule is _every
-challenge must cite a source_.
+measurement** from an earlier spike commit, and pulled it into the argument where nobody had
+weighted it. That is the thread that unraveled the verdict, and it surfaced because the seat's
+rule is _every challenge must cite a source_.
 
 ## Then the spike ran
 
@@ -158,7 +156,9 @@ against a false shared premise — every participant inherits it. If a crux clai
 test it before the debate converges, not after.
 
 **Test the testable mid-debate.** Both reversals came from someone stopping the argument to run
-an experiment. Predictions are cheap; controls are not.
+an experiment. Predictions are cheap; controls are not. A swept test does the same to a hand-picked one:
+six hues that looked like coverage were
+[functionally the set of hues that pass](/essays/sweeps-vs-fixed-seeds/).
 
 **Preserve the reasoning that lost.** A synthesis that quietly rewrites itself to match the
 final answer destroys the only record of why the wrong answer was attractive — and the wrong
@@ -184,5 +184,4 @@ references are entries in the decision register retired with them ([`e7a7232`][t
 [record2]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs/sessions/2026-06-25-item-c-draft-preview-debate
 [tree]: https://github.com/jamierthompson/digital-garden/tree/e7a7232/docs
 
-The distilled rule is [A debate produces a hypothesis rather than a decision](/notes/debate-produces-a-hypothesis/); the system it belongs to is
-[Directing AI agents](/essays/directing-agents/).
+The rule: [A debate produces a hypothesis rather than a decision](/notes/debate-produces-a-hypothesis/).

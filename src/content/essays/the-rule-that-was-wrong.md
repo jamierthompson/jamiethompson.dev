@@ -1,6 +1,6 @@
 ---
 title: "My requirement was the bug and every AI agent served it faithfully"
-description: "A QA agent reported a defect it couldn't test, because a live test would hang the suite. That was the design contradicting itself — under a requirement I had asked for. The approval was reasoned and defensible at the time; nobody re-evaluated it for 24 days while the project outgrew it. The agents solved the goal they were given; nobody asked whether the goal was still right."
+description: "A QA agent filed a defect it couldn't test, because a live test would hang the suite. That was my own requirement contradicting itself — and it had sat for 24 days."
 pubDate: 2026-08-07
 ---
 
@@ -12,11 +12,10 @@ pubDate: 2026-08-07
 > project. Then it sat unquestioned for another 24 days, because nothing in the process ever
 > asked whether it should stay approved.
 
-This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
-production code written by coding agents. The code in question is a color engine — it takes
-whatever color an editor supplies and returns an accessible, in-gamut palette — and every part of
-the machinery around it, coding agents and adversarial QA alike, did its job here. The failure was
-mine, and it's **the one failure the machinery cannot catch.**
+Every part of [the machinery I use to ship agent-written code](/essays/directing-agents/) did its
+job here — the coding agents, and the adversarial QA that attacks what they build. The code in
+question is a color engine: it takes whatever color an editor supplies and returns an accessible,
+in-gamut palette. The failure was mine, and it's **the one failure the machinery cannot catch.**
 
 The requirement was mine. I wanted the engine batteries-included, so I asked for `never throws` —
 whatever an editor pastes, a usable palette comes back. Every agent that touched it afterward
@@ -118,7 +117,9 @@ The silent fallback was the feature. **In the new design it's the bug.**
 
 It would be convenient to conclude that adversarial QA had a blind spot — it didn't. **The QA
 agent surfaced the contradiction on the day it existed and documented why it couldn't be
-tested.** The evidence was in the artifact, in plain language, 24 days before I fully understood it.
+tested.** The evidence was in the artifact, in plain language, 24 days before I fully understood
+it. The rule that put [an unprimed reviewer in the room](/essays/the-qa-rule/) is worth having; this is
+what it cannot reach.
 
 The real failure mode is narrower and more uncomfortable:
 
@@ -171,11 +172,9 @@ has, because the agents inside it are — correctly — busy treating settled de
 Someone has to hold what the thing is _for_, and that can't be the same party that's busy
 achieving it.
 
-One gap remains: all of this still runs on me remembering to ask. Nothing
-puts an aging decision back in front of me the way a failing test puts itself in front of an
-agent — **the questions have a practice now, but no hook.** Building that hook — a mechanism
-that resurfaces an early call when the project outgrows it — is the next improvement this system
-needs.
+One gap remains: all of this still runs on me remembering to ask. Nothing puts an aging decision
+back in front of me the way a failing test puts itself in front of an agent — **the questions have
+a practice now, but no hook.**
 
 ## The honest version of the thesis
 
@@ -192,5 +191,4 @@ the agents at all.
 
 [c99]: https://github.com/jamierthompson/digital-garden/commit/bfb9968b8dd12ebecbde17b1d9a76d36c2ceb56d
 
-The distilled rule is [Require the reasoning behind every solution](/notes/require-the-reasoning/); the system it belongs to is
-[Directing AI agents](/essays/directing-agents/).
+The practice: [Require the reasoning behind every solution](/notes/require-the-reasoning/).

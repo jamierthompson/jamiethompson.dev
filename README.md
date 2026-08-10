@@ -20,11 +20,11 @@ Node is pinned in `.nvmrc` — run `nvm use` (or `nvm install`) in the repo root
 and your shell matches CI and Vercel.
 
 ```sh
-npm install
-npm run dev        # local dev server
-npm run build      # production build to dist/
-npm run preview    # serve the production build
-npm run format     # prettier --write
+pnpm install
+pnpm run dev        # local dev server
+pnpm run build      # production build to dist/
+pnpm run preview    # serve the production build
+pnpm run format     # prettier --write
 ```
 
 ## The gate
@@ -33,10 +33,10 @@ Run this before pushing — GitHub Actions runs the same commands in the same
 order, so green locally means green in CI:
 
 ```sh
-npm run format:check
-npm run check       # astro check — typecheck .astro and .ts
-npm run test        # vitest
-npm run test:e2e    # builds, then playwright against the preview server
+pnpm run format:check
+pnpm run check       # astro check — typecheck .astro and .ts
+pnpm run test        # vitest
+pnpm run test:e2e    # builds, then playwright against the preview server
 ```
 
 `test:e2e` always starts its own `astro preview` on port 4331, not Astro's

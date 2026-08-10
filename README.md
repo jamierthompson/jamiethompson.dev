@@ -34,9 +34,17 @@ order, so green locally means green in CI:
 
 ```sh
 npm run format:check
+npm run check       # astro check — typecheck .astro and .ts
 npm run test        # vitest
 npm run test:e2e    # builds, then playwright against the preview server
 ```
+
+`test:e2e` always starts its own `astro preview` on port 4331, not Astro's
+default 4321 — a backgrounded `astro dev` sits there for days, and testing it
+would test HMR output and an injected dev toolbar instead of the build that
+ships. Playwright only ever probes the port it is given, so the move alone is
+what keeps the dev server out of it; `reuseExistingServer: false` then makes a
+stale process still holding 4331 fail the run loudly instead of being reused.
 
 Every pull request runs the `gate` job (`.github/workflows/ci.yml`) plus
 Vercel's build-and-deploy check.

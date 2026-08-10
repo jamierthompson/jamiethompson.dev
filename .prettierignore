@@ -1,4 +1,7 @@
 dist/
 .astro/
 package-lock.json
-staging/
+
+# Agent-team worktrees — full repo checkouts under this runtime dir, so
+# `prettier --check .` would otherwise walk a second copy of every source file.
+.claude/worktrees/

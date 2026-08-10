@@ -3,6 +3,7 @@ import type { GetStaticPaths } from "astro";
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
 import Backlinks from "../../components/Backlinks.astro";
+import ExternalLink from "../../components/ExternalLink.astro";
 import { formatDate } from "../../lib/formatDate";
 import { getBacklinks } from "../../lib/references";
 
@@ -57,7 +58,7 @@ const backlinks = await getBacklinks("experiments", experiment.id);
         data.repo && (
           <>
             {" "}
-            · <a href={data.repo}>repository</a>
+            · <ExternalLink href={data.repo}>repository</ExternalLink>
           </>
         )
       }

@@ -32,6 +32,8 @@ jobs:
 
       - run: npm run format:check
 
+      - run: npm run check
+
       - run: npm run test
 
       # test:e2e builds and then serves dist/ via `astro preview`, so the

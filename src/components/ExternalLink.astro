@@ -1,0 +1,131 @@
+---
+import type { HTMLAttributes } from "astro/types";
+import { isExternalHref } from "../lib/externalLink";
+
+/**
+ * This adds `data-external` — the hook `Base.astro` draws the icon from — and
+ * nothing else. It sets no `target`: which tab a link opens in is the reader's
+ * call, so there is no change of context (WCAG 2.2 3.2.5) to warn about and
+ * nothing for a `rel="noopener"` to protect.
+ *
+ * Internal links want a plain `<a>` — passing one here is a build error, as is
+ * passing `href` or `data-external` twice, passing `target` at all, or leaving
+ * the link unnamed. Everything else passes through, `rel="me"` included.
+ *
+ * Markdown needs none of this: `rehypeMarkExternalLinks` (`astro.config.ts`)
+ * marks a plain `[text](https://…)` at build time through the same
+ * `isExternalHref`, so the two surfaces can't drift.
+ */
+interface Props extends Omit<HTMLAttributes<"a">, "href"> {
+  href: string;
+}
+
+/**
+ * Attributes this component sets itself. Anything a caller passes under one of
+ * these names would be spread onto the anchor by `{...rest}` and emit a
+ * duplicate (exact-case `href` is destructured out of `Astro.props`, so for
+ * that name only a case variant can get here), which the tokenizer resolves by
+ * keeping the first and dropping the rest (HTML Standard §13.2.5.33) — so the
+ * caller loses silently and the markup is invalid. Matched case-insensitively
+ * because that same tokenizer lowercases every attribute name it reads:
+ * `HREF` IS `href`.
+ */
+const OWNED_ATTRIBUTES = new Set(["href", "data-external"]);
+
+/**
+ * Attributes refused for a reason other than a duplicate. `target` is refused
+ * because this component sets none: a caller-supplied `target` is a change of
+ * context (WCAG 2.2 3.2.5) with nothing to announce it. Refusing it here fails
+ * the build at the call site rather than in a sweep over the built HTML.
+ *
+ * `rel` is deliberately not in this set. It is an additive token list with
+ * legitimate caller uses — `rel="me"`, the IndieAuth/Mastodon identity hook —
+ * so refusing it would cost a caller something real; `target` costs nothing,
+ * because the reader already has cmd-click.
+ *
+ * Matched case-insensitively for the same reason as the owned set.
+ */
+const REFUSED_ATTRIBUTES = new Set(["target"]);
+
+/**
+ * The attributes that can name the link in place of its contents (Accessible
+ * Name and Description Computation 1.2, step 2C beats 2F). Matched
+ * case-insensitively for the same reason as the sets above.
+ */
+const NAME_ATTRIBUTES = new Set(["aria-label", "aria-labelledby"]);
+
+const { href: passedHref, ...rest } = Astro.props;
+
+// `astro check` guards the typed call sites, but nothing enforces props at
+// runtime, so a forgotten href would otherwise die inside the rule with
+// `undefined.trim`.
+if (typeof passedHref !== "string" || passedHref.trim() === "") {
+  throw new Error("<ExternalLink> requires an href.");
+}
+
+// Trimmed once, up front: the rule trims before deciding, so the anchor has to
+// carry the href the decision was made about.
+const href = passedHref.trim();
+
+const passed = Object.keys(rest);
+
+const overrides = passed.filter((name) =>
+  OWNED_ATTRIBUTES.has(name.toLowerCase()),
+);
+
+if (overrides.length > 0) {
+  throw new Error(
+    `<ExternalLink> sets ${[...OWNED_ATTRIBUTES].join(", ")} itself — remove ${overrides.join(", ")} from the link to "${href}". Opting a single link out is what this component exists to prevent.`,
+  );
+}
+
+const refused = passed.filter((name) =>
+  REFUSED_ATTRIBUTES.has(name.toLowerCase()),
+);
+
+if (refused.length > 0) {
+  throw new Error(
+    `<ExternalLink> refuses ${[...REFUSED_ATTRIBUTES].join(", ")} — remove ${refused.join(", ")} from the link to "${href}". This component sets no target: which tab a link opens in is the reader's call, and a target here would change context with nothing to announce it. \`rel\` is not refused — it is an additive token list, and \`rel="me"\` has a job to do.`,
+  );
+}
+
+if (!isExternalHref(href)) {
+  throw new Error(
+    `<ExternalLink> got "${href}", which does not leave the site. Use a plain <a> for internal links.`,
+  );
+}
+
+/**
+ * A link whose only content is whitespace has no accessible name at all, and
+ * an icon drawn by `::after` cannot supply one (WCAG 2.2 2.4.4 Link Purpose).
+ * Astro re-evaluates the slot for the second consumer rather than replaying it
+ * (runtime/server/render/astro/instance.js:24-30), so rendering it here to
+ * check the name costs one extra evaluation and leaves the output correct.
+ *
+ * The limit of the check: it reads the *rendered* slot, so any markup counts as
+ * a name. Markup that renders to nothing a screen reader can announce — an
+ * `<img alt="">`, an HTML comment — passes and would ship a nameless link.
+ */
+const slotted = Astro.slots.has("default")
+  ? ((await Astro.slots.render("default")) ?? "")
+  : "";
+
+/**
+ * A label has to *say* something, not merely be passed: accname 1.2 step 2C
+ * uses an `aria-label` only "if it is not empty after trimming", so an empty
+ * one names nothing and the computation falls through to the empty contents.
+ */
+const labelled = passed.some((name) => {
+  if (!NAME_ATTRIBUTES.has(name.toLowerCase())) return false;
+  const value: unknown = (rest as Record<string, unknown>)[name];
+  return typeof value === "string" && value.trim() !== "";
+});
+
+if (slotted.trim() === "" && !labelled) {
+  throw new Error(
+    `<ExternalLink href="${href}"> has no link text. A link needs a name that says where it goes.`,
+  );
+}
+---
+
+<a href={href} data-external {...rest}><slot /></a>

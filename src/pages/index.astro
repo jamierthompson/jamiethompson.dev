@@ -1,6 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import Base from "../layouts/Base.astro";
+import ExternalLink from "../components/ExternalLink.astro";
 
 const experiments = (
   await getCollection("experiments", ({ data }) => !data.draft)
@@ -31,8 +32,8 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
       >Directing AI agents: how I ship production code I didn't write</a
     > — the system of governance and measurement that makes it work. Its working rules
     are public at{" "}
-    <a href="https://github.com/jamierthompson/agent-conventions"
-      >agent-conventions</a
+    <ExternalLink href="https://github.com/jamierthompson/agent-conventions"
+      >agent-conventions</ExternalLink
     >. That system is the first body of work here, not the last.
   </p>
 

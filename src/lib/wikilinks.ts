@@ -1,13 +1,14 @@
 import { slug } from "github-slugger";
-import { unified, type Processor } from "unified";
+import { unified } from "unified";
 import remarkParse from "remark-parse";
+import remarkMdx from "remark-mdx";
 import { visit } from "unist-util-visit";
 import { wikiLinkPlugin } from "remark-wiki-link";
 import type { Node } from "unist";
 
 /**
- * Wikilink conventions shared by the remark pipeline (astro.config.ts), the
- * backlink index, and the tests — one definition so they can't drift.
+ * Wikilink conventions shared by the remark pipeline (astro.config.ts) and
+ * the backlink index — one definition so they can't drift.
  *
  * `[[target]]` and `[[target|alias]]` resolve into the notes namespace.
  * Targets slugify with github-slugger — the same slugger Astro's glob loader
@@ -31,22 +32,86 @@ interface WikiLinkNode extends Node {
   value: string;
 }
 
-const parser: Processor = unified()
+export type EntryFormat = "md" | "mdx";
+
+const MDX_EXTENSION = ".mdx";
+
+/**
+ * The format Astro renders an entry with, from the `filePath` its loader
+ * stored. Astro resolves this the same way: the glob loader looks the
+ * extension up in an exact, case-sensitive map of registered entry types
+ * (`astro/dist/content/loaders/glob.js`), and `@astrojs/mdx` registers only
+ * `.mdx` — so `.MDX` matches nothing and such a file never becomes an entry
+ * at all.
+ *
+ * Anything that is not exactly `.mdx` is therefore markdown, which is also
+ * the safe direction: MDX is not a superset of markdown — it disables
+ * `codeIndented`, `autolink`, `htmlFlow` and `htmlText`, and throws outright
+ * on ordinary prose like an HTML comment or `x<3`. A path with no extension,
+ * or one whose *directory* merely ends in `.mdx`, lands on markdown rather
+ * than throwing.
+ */
+export function entryFormatFromPath(
+  filePath: string | undefined,
+): EntryFormat | undefined {
+  if (filePath === undefined) return undefined;
+  return filePath.endsWith(MDX_EXTENSION) ? "mdx" : "md";
+}
+
+const markdownParser = unified()
   .use(remarkParse)
   .use(wikiLinkPlugin, wikiLinkOptions);
+
+const mdxParser = unified()
+  .use(remarkParse)
+  .use(remarkMdx)
+  .use(wikiLinkPlugin, wikiLinkOptions);
+
+/**
+ * The two grammars disagree in both directions, so neither is a safe stand-in
+ * for the other: markdown reads a JSX array-of-arrays prop as a wikilink,
+ * while MDX turns an indented code block into a paragraph — it disables
+ * `codeIndented`, `autolink`, `htmlFlow` and `htmlText`. A body with no
+ * declared format therefore keeps only the targets both grammars agree the
+ * page renders, which is the direction that cannot invent a phantom backlink.
+ */
+function collectTargets(
+  body: string,
+  format: EntryFormat | undefined,
+  collect: (tree: Node) => string[],
+): string[] {
+  if (format === "md") return collect(markdownParser.parse(body));
+  if (format === "mdx") return collect(mdxParser.parse(body));
+
+  const asMarkdown = collect(markdownParser.parse(body));
+  let asMdx: string[];
+  try {
+    asMdx = collect(mdxParser.parse(body));
+  } catch {
+    // Not valid MDX, so markdown is the only grammar that could render it.
+    return asMarkdown;
+  }
+  const renderedByMdx = new Set(asMdx);
+  return asMarkdown.filter((target) => renderedByMdx.has(target));
+}
 
 /**
  * Extraction runs the real parser, not a regex, so the backlink index counts
  * exactly the links the rendered page carries — a wikilink inside a code
- * fence or inline code renders as text and must not create a backlink.
+ * fence, inline code, or (in MDX) a JSX prop renders as something other than
+ * a link and must not create a backlink.
  */
-export function extractWikiTargets(markdown: string): string[] {
-  const tree = parser.parse(markdown);
-  const targets = new Set<string>();
-  visit(tree, "wikiLink", (node: WikiLinkNode) => {
-    targets.add(slugifyWikiTarget(node.value));
+export function extractWikiTargets(
+  body: string,
+  format?: EntryFormat,
+): string[] {
+  return collectTargets(body, format, (tree) => {
+    const targets = new Set<string>();
+    visit(tree, "wikiLink", (node: WikiLinkNode) => {
+      targets.add(slugifyWikiTarget(node.value));
+    });
+    return [...targets];
   });
-  return [...targets];
 }
 
 export type LinkedCollection = "essays" | "notes" | "experiments";
@@ -56,6 +121,8 @@ export interface LinkedEntry {
   id: string;
   title: string;
   body: string;
+  /** Omitted when the loader gave the entry no file path to read it from. */
+  format?: EntryFormat;
 }
 
 export interface Backlink {
@@ -64,14 +131,22 @@ export interface Backlink {
   title: string;
 }
 
-/** Map from a note's id to every entry whose body wikilinks to it. */
+/**
+ * Map from a note's id to every entry whose body wikilinks to it.
+ *
+ * Both sides of the self-link comparison are slugified: a wikilink target
+ * always is, but an entry id is only slug-shaped by convention — Astro's
+ * glob loader hands back a frontmatter `slug` verbatim — and comparing the
+ * two raw would let a note list itself as a backlink to itself.
+ */
 export function buildBacklinkIndex(
   entries: LinkedEntry[],
 ): Map<string, Backlink[]> {
   const index = new Map<string, Backlink[]>();
   for (const entry of entries) {
-    for (const target of extractWikiTargets(entry.body)) {
-      if (entry.collection === "notes" && target === entry.id) continue;
+    const selfTarget = slugifyWikiTarget(entry.id);
+    for (const target of extractWikiTargets(entry.body, entry.format)) {
+      if (entry.collection === "notes" && target === selfTarget) continue;
       const sources = index.get(target) ?? [];
       sources.push({
         collection: entry.collection,
@@ -84,33 +159,45 @@ export function buildBacklinkIndex(
   return index;
 }
 
-/** Key an entry is indexed under in the reference index. */
 export function referenceKey(collection: LinkedCollection, id: string): string {
   return `${collection}/${id}`;
 }
 
-const INTERNAL_LINK_PATTERN = /^\/(essays|notes|experiments)\/([^/#?]+)\/?$/;
+/**
+ * A trailing fragment or query narrows where a link lands *within* an entry,
+ * so it is part of the URL but not part of the id — it is matched and
+ * discarded rather than allowed to fail the whole match.
+ */
+const INTERNAL_LINK_PATTERN =
+  /^\/(essays|notes|experiments)\/([^/#?]+)\/?(?:[#?].*)?$/;
 
 interface MarkdownLinkNode extends Node {
   url: string;
 }
 
 /**
- * Internal `[text](/collection/id/)` targets, as reference keys. Like
- * wikilink extraction this runs the real parser, so a link inside a code
- * fence or inline code renders as text and must not create a reference.
- * Index pages (`/notes/`) and external URLs never match.
+ * Internal `[text](/collection/id/)` targets, as reference keys.
+ *
+ * A fragment or query is stripped, so `/notes/a-note/#the-part` references
+ * `notes/a-note` — the page renders one cross-reference either way. What
+ * never matches is a link that names no single entry: an index page
+ * (`/notes/`), a path outside the three collections (`/about/`), a deeper
+ * path (`/notes/a/b/`), and any external URL.
  */
-export function extractInternalLinkTargets(markdown: string): string[] {
-  const tree = parser.parse(markdown);
-  const targets = new Set<string>();
-  visit(tree, "link", (node: MarkdownLinkNode) => {
-    const match = INTERNAL_LINK_PATTERN.exec(node.url);
-    if (match) {
-      targets.add(referenceKey(match[1] as LinkedCollection, match[2]));
-    }
+export function extractInternalLinkTargets(
+  body: string,
+  format?: EntryFormat,
+): string[] {
+  return collectTargets(body, format, (tree) => {
+    const targets = new Set<string>();
+    visit(tree, "link", (node: MarkdownLinkNode) => {
+      const match = INTERNAL_LINK_PATTERN.exec(node.url);
+      if (match) {
+        targets.add(referenceKey(match[1] as LinkedCollection, match[2]));
+      }
+    });
+    return [...targets];
   });
-  return [...targets];
 }
 
 /**
@@ -124,10 +211,12 @@ export function buildReferenceIndex(
 ): Map<string, Backlink[]> {
   const index = new Map<string, Backlink[]>();
   for (const entry of entries) {
-    const selfKey = referenceKey(entry.collection, entry.id);
+    const selfKey = referenceKey(entry.collection, slugifyWikiTarget(entry.id));
     const targets = new Set([
-      ...extractWikiTargets(entry.body).map((id) => referenceKey("notes", id)),
-      ...extractInternalLinkTargets(entry.body),
+      ...extractWikiTargets(entry.body, entry.format).map((id) =>
+        referenceKey("notes", id),
+      ),
+      ...extractInternalLinkTargets(entry.body, entry.format),
     ]);
     for (const target of targets) {
       if (target === selfKey) continue;

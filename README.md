@@ -1,7 +1,7 @@
 # jamiethompson.dev
 
-A lab notebook in public: experiments with their data, short backlinked notes, and
-longer essays. Built with [Astro](https://astro.build).
+Where I write about the things I build: experiments with their data, short backlinked
+notes, and longer essays. Built with [Astro](https://astro.build).
 
 Three content types, three jobs: **experiments** (living pages — hypothesis, data, outcome),
 **notes** (one idea each), **essays** (the longer arguments

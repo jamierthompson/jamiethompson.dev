@@ -4,6 +4,8 @@ import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 import { wikiLinkPlugin } from "remark-wiki-link";
+import { rehypeMarkExternalLinks } from "./src/lib/externalLink";
+import { SITE_URL } from "./src/lib/site";
 import { slugifyWikiTarget, wikiLinkOptions } from "./src/lib/wikilinks";
 
 // Slugs of notes that exist right now, so remark-wiki-link can class links
@@ -13,14 +15,17 @@ const existingNoteSlugs = readdirSync("./src/content/notes")
   .map((file) => slugifyWikiTarget(file.replace(/\.(md|mdx)$/, "")));
 
 export default defineConfig({
-  site: "https://jamiethompson.dev",
+  site: SITE_URL,
   integrations: [mdx(), sitemap()],
   markdown: {
-    // MDX inherits this processor, so .md and .mdx share one pipeline.
+    // MDX inherits these plugin lists, so one rule serves .md and .mdx. It
+    // does not inherit the plugin order — see src/lib/externalLink.test.ts
+    // for what that costs.
     processor: unified({
       remarkPlugins: [
         [wikiLinkPlugin, { ...wikiLinkOptions, permalinks: existingNoteSlugs }],
       ],
+      rehypePlugins: [rehypeMarkExternalLinks],
     }),
   },
 });

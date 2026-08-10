@@ -1,6 +1,6 @@
 ---
 title: "I evaluated my own AI agent orchestration tool and it lost twice"
-description: "With-skill vs. an uncontaminated baseline, four prompts, two carrying deliberate traps. The baseline beat the skill in two specific ways; both losses became edits before merge. Two runs died to an outage and are reported as inferred, not measured."
+description: "I measured my own orchestration skill against an uncontaminated baseline. It scored parity, the baseline beat it twice, and both losses became edits."
 pubDate: 2026-08-07
 ---
 
@@ -10,14 +10,13 @@ pubDate: 2026-08-07
 
 ---
 
-This is a worked case from [Directing AI agents](/essays/directing-agents/), the system I use to ship
-production code written by coding agents. I package the system's recurring working patterns as
-**skills** — instruction files a session loads to do a particular job a particular way.
-The biggest one, `agent-team`, turns a session into a team lead: it decides whether a task deserves
-a multi-agent team at all, then spawns, briefs, and coordinates the agents. A skill is a prompt,
-and a prompt is an LLM system like any other — so before this one merged, it got what any LLM
-system should get: an eval with a stated unit under test, an honest baseline, and results published
-even where they're unflattering. Especially where they're unflattering, as it turned out.
+I package the recurring patterns of [how I direct coding agents](/essays/directing-agents/) as
+**skills** — instruction files a session loads to do a particular job a particular way. The biggest
+one, `agent-team`, turns a session into a team lead: it decides whether a task deserves a
+multi-agent team at all, then spawns, briefs, and coordinates the agents. A skill is a prompt, and
+a prompt is an LLM system like any other — so before this one merged, it got what any LLM system
+should get: an eval with a stated unit under test, an honest baseline, and results published even
+where they're unflattering. Especially where they're unflattering, as it turned out.
 
 ## What was under test
 
@@ -34,7 +33,8 @@ discovered by a reader.
 
 ## Method
 
-Four prompts, one per mode, each run twice — once with the skill, once without. Eight runs.
+Four prompts, one per mode, each run twice — once with the skill, once without. Eight runs, over
+three days in June 2026.
 
 **The baseline had to be built carefully.** A project skill auto-loads into any spawned
 subagent, which would have contaminated every baseline run:
@@ -148,10 +148,10 @@ one that survives someone reading carefully.
 > only spawns a team when the cross-examination or parallel file-ownership genuinely earns the
 > ~15× token premium.
 
-(That "~15×" is my own error, preserved here because it's a quote. Anthropic's figure is 15× a
-_chat_ interaction and ~4× a _single agent_
-([source](https://www.anthropic.com/engineering/multi-agent-research-system)). The verdict
-holds; the multiplier in it was inflated about fourfold.)
+(That "~15×" is my own error, kept because it's a quote. A team costs nearer 4× a single agent
+([source][multi-agent]) — the verdict holds, the number in it doesn't.)
+
+[multi-agent]: https://www.anthropic.com/engineering/multi-agent-research-system
 
 ## Why I keep pointing at this one
 
@@ -162,7 +162,8 @@ baseline in two specific ways.
 
 That is what an eval is _for_. An eval that confirms the thing you already shipped taught you
 nothing and cost you a day. The reason to run it before merge rather than after is that
-**before merge, a losing result is free.**
+**before merge, a losing result is free.** Afterwards it costs a retraction — or never happens, and the
+claim stands until [someone measures it](/essays/the-reversal/).
 
 The same discipline applies to anything LLM-shaped in a product: define the unit under test,
 build a genuinely uncontaminated baseline, plant inputs where the correct answer is "stop, this
@@ -170,10 +171,13 @@ target doesn't exist," and **publish the runs you lost**.
 
 ---
 
-The eval ran in the private working sessions behind
-[agent-conventions](https://github.com/jamierthompson/agent-conventions); the scorecard and
-findings quoted here are from those records. The skill it tested — with both post-eval edits in
-place — is public in that repo.
+The whole trail is public: the [method and the per-mode assertions][design], the
+[six verbatim run outputs][runs], and the [head-to-head grading][findings]. The skill they tested,
+with both post-eval edits in place, is public at
+[agent-conventions](https://github.com/jamierthompson/agent-conventions).
 
-The distilled rule is [A prompt is a system you measure rather than vibe-check](/notes/measure-dont-vibe-check/); the system it belongs to is
-[Directing AI agents](/essays/directing-agents/).
+[design]: https://github.com/jamierthompson/digital-garden/blob/179423f/docs/handbook/making-of/agent-team-skill/eval-design.md
+[runs]: https://github.com/jamierthompson/digital-garden/tree/179423f/docs/handbook/making-of/agent-team-skill/eval-runs
+[findings]: https://github.com/jamierthompson/digital-garden/blob/179423f/docs/handbook/making-of/agent-team-skill/findings.md
+
+The rule: [A prompt is a system you measure rather than vibe-check](/notes/measure-dont-vibe-check/).

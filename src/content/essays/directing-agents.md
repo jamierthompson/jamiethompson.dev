@@ -1,10 +1,7 @@
 ---
 title: "Directing AI agents: how I ship production code I didn't write"
-description:
-  "Shipping production code with agents is a structure problem, not a prompting problem: a lead
-  that never authors, reviewers with no prior context, measurement over confidence — and the
-  published evidence for all three."
-pubDate: 2026-08-07
+description: "Shipping agent-written code is a structure problem, not a prompting one: a lead that never authors, unprimed reviewers, and measurement over confidence."
+pubDate: 2026-08-08
 ---
 
 I don't write most of the code I ship. Agents do. I read every change before it merges, and I own
@@ -85,11 +82,11 @@ spike then tested the two facts the verdict rested on and refuted both.
 is the full record, including why the reasoning that lost was preserved.
 
 The same commitment applies to my own tooling. Before the orchestration skill merged, I
-[evaluated it against an uncontaminated baseline](/experiments/agent-team-skill-eval/) — four
+[evaluated it against an uncontaminated baseline](/essays/agent-team-skill-eval/) — four
 prompts, two carrying deliberate traps. It scored parity, and the baseline reasoned better in
 two specific ways; both losses became edits before the merge. And when a test suite's
 hand-picked fixtures claimed coverage they didn't have,
-[a swept replacement](/experiments/sweeps-vs-fixed-seeds/) — 190,000 combinations, then an
+[a swept replacement](/essays/sweeps-vs-fixed-seeds/) — 190,000 combinations, then an
 independent 359,040 — found the accessibility defect the fixtures never could.
 
 Even staffing decisions run on published data rather than instinct. Anthropic's figures put a
@@ -119,16 +116,16 @@ me do it.
 [My requirement was the bug and every AI agent served it faithfully](/essays/the-rule-that-was-wrong/)
 is the full case.
 
-This is also part of why the lead agent never writes code, even when a task looks
-straightforward: I need a discussion partner more than I need another pair of hands. Design
-decisions stay with me, and every decision I don't fully understand every aspect of — including
-what it means for decisions not yet made — comes back with its reasoning, not
-just its diff: what's wrong in plain language, the fix and the trade-off it accepts, the
-alternatives considered, one stated recommendation, and the strongest counter-argument to it.
-And I ask more than I used to — for pros and cons, for the future-looking implications I don't
-yet understand, for the counter-opinion. The counter-argument is the load-bearing part: against a
-sound solution the surface objections run out fast, so a full-strength counter-argument ends up
-aimed at the premise — and premises are what expire.
+This is also part of why the lead agent never writes code, even when a task looks straightforward:
+I need a discussion partner more than I need another pair of hands. Design decisions stay with me,
+and every decision I don't fully understand every aspect of — including what it means for
+decisions not yet made — comes back with its reasoning, not just its diff: what's wrong in plain
+language, the fix and the trade-off it accepts, the alternatives considered, one stated
+recommendation, and the strongest counter-argument to it. And I ask more than I used to — for pros
+and cons, for the future-looking implications I don't yet understand, for the counter-opinion. The
+counter-argument is the load-bearing part: against a sound solution the surface objections run out
+fast, so a full-strength counter-argument ends up aimed at the premise — and premises are what
+expire.
 
 ## The limits I know about
 
@@ -143,8 +140,8 @@ cross-examine — until the per-phase staffing test made the cost visible before
 of after.
 
 The re-evaluation of settled decisions has the same shape: it runs on me remembering to ask.
-There is no hook yet that resurfaces an early call when the project outgrows it — that gap is
-named in [the full case](/essays/the-rule-that-was-wrong/), and closing it is on the roadmap.
+There is no hook yet that resurfaces an early call when the project outgrows it — nothing puts an
+aging decision in front of me the way a failing test puts itself in front of an agent.
 
 And the system has only run solo, where I am both the standard and its enforcer. It hasn't met
 another engineer's standards, or a shared `main` under real load. Until it does, "transferable"
@@ -174,5 +171,5 @@ The system is in use now. The conventions are public at
 The build they were forged on is archived — it was the lab, not the product — but its evidence
 record stays public at [digital-garden](https://github.com/jamierthompson/digital-garden):
 every pull request, every QA log, checkable rather than take-my-word-for-it. This site is built
-the same way, with [experiments](/experiments/) carrying new data as it lands and the
-[notes](/notes/) holding the reasoning behind each rule.
+the same way, with [notes](/notes/) taking one idea at a time and [essays](/essays/) making the
+longer arguments.

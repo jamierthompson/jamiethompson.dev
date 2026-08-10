@@ -6,9 +6,8 @@ description:
 pubDate: 2026-08-07
 ---
 
-**The rule:** anything LLM-shaped — a skill, a prompt, an orchestration pattern — is a system
-whose behavior you **measure before it merges**, against a baseline that has genuinely never seen
-it.
+Anything LLM-shaped — a skill, a prompt, an orchestration pattern — is a system whose behavior you
+**measure before it merges**, against a baseline that has genuinely never seen it.
 
 Three parts carry the weight. The baseline must be **uncontaminated** — a project skill auto-loads
 into spawned subagents, so an honest baseline means parking the thing under test where no run can
@@ -23,4 +22,4 @@ nothing and cost you a day.
 
 The eval that produced this rule scored my own tool at parity with no tool at all — and the
 baseline beat it twice. Both losses became edits before merge. The full run is at
-[I evaluated my own AI agent orchestration tool and it lost twice](/experiments/agent-team-skill-eval/).
+[I evaluated my own AI agent orchestration tool and it lost twice](/essays/agent-team-skill-eval/).

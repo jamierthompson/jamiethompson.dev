@@ -6,9 +6,8 @@ description:
 pubDate: 2026-08-07
 ---
 
-**The rule:** before a slice enters a pull request, a fresh agent with **no prior context of the
-work** tries to break it. It is briefed on the requirements and the diff — never the design
-rationale.
+Before a slice enters a pull request, a fresh agent with **no prior context of the work** tries to
+break it. It is briefed on the requirements and the diff — never the design rationale.
 
 "A fresh agent, never the one that wrote it" sounds sufficient. It failed within hours of being written: a reviewer
 that has absorbed the diagnosis and the fix rationale is primed to confirm. It inherits the
@@ -19,6 +18,9 @@ The rule holds structurally, not by discipline: the coder never briefs its own r
 writes the QA brief from the diff and the requirements alone, so the priming is unavailable
 rather than resisted.
 
+It cannot check the requirements themselves — a reviewer attacks the work against them, so a
+requirement that has stopped making sense gets enforced rather than caught.
+[[require-the-reasoning|That one stays with the person directing the work]].
+
 The two failures that produced this rule — one in the reviewer's seat, one in the author's — are
-worked through in [Briefing your AI reviewer turns it into a second
-author](/essays/the-qa-rule/).
+worked through in [Briefing your AI reviewer turns it into a second author](/essays/the-qa-rule/).

@@ -1,4 +1,4 @@
-# jamiethompson.dev
+# jamiethompson.design
 
 Projects, essays and notes, linked to each other.
 Built with [Astro](https://astro.build).

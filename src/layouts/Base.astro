@@ -81,11 +81,9 @@ const TWITTER_CARD = "summary";
     <meta property="og:type" content={OG_TYPE} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:title" content={pageTitle} />
-    {
-      pageDescription && (
-        <meta property="og:description" content={pageDescription} />
-      )
-    }
+    {pageDescription && (
+      <meta property="og:description" content={pageDescription} />
+    )}
     <meta property="og:site_name" content={SITE_NAME} />
     <meta name="twitter:card" content={TWITTER_CARD} />
     <title>{title}</title>

@@ -15,13 +15,11 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
   <p>The longer arguments — essays and case studies.</p>
   {essays.length === 0 && <p class="muted">First essay in progress.</p>}
   <ul>
-    {
-      essays.map((essay) => (
-        <li>
-          <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
-          <p class="muted">{essay.data.description}</p>
-        </li>
-      ))
-    }
+    {essays.map((essay) => (
+      <li>
+        <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
+        <p class="muted">{essay.data.description}</p>
+      </li>
+    ))}
   </ul>
 </Base>

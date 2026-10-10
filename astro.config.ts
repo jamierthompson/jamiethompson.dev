@@ -1,8 +1,9 @@
 import { existsSync, readdirSync } from "node:fs";
-import { defineConfig } from "astro/config";
+import { defineConfig, fontProviders } from "astro/config";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
+import tailwindcss from "@tailwindcss/vite";
 import { wikiLinkPlugin } from "remark-wiki-link";
 import { rehypeMarkExternalLinks } from "./src/lib/externalLink";
 import { CONTENT_DIR } from "./src/lib/contentDir";
@@ -41,6 +42,27 @@ if (collisions.length > 0) {
 export default defineConfig({
   site: SITE_URL,
   integrations: [mdx(), sitemap()],
+  vite: { plugins: [tailwindcss()] },
+  // Self-hosted at build time; the variables are mapped to Tailwind's
+  // --font-sans / --font-mono in src/styles/global.css.
+  fonts: [
+    {
+      provider: fontProviders.google(),
+      name: "Geist",
+      cssVariable: "--font-geist-sans",
+      weights: ["100 900"],
+      subsets: ["latin"],
+      fallbacks: ["ui-sans-serif", "system-ui", "sans-serif"],
+    },
+    {
+      provider: fontProviders.google(),
+      name: "Geist Mono",
+      cssVariable: "--font-geist-mono",
+      weights: ["100 900"],
+      subsets: ["latin"],
+      fallbacks: ["ui-monospace", "monospace"],
+    },
+  ],
   markdown: {
     // MDX inherits these plugin lists, so one rule serves .md and .mdx. It
     // does not inherit the plugin order — see src/lib/externalLink.test.ts

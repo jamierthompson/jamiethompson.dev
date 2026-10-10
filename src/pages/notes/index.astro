@@ -14,7 +14,7 @@ const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
     {notes.map((note) => (
       <li>
         <a href={`/notes/${note.id}/`}>{note.data.title}</a>
-        <p class="muted">{note.data.description}</p>
+        <p class="text-muted-foreground">{note.data.description}</p>
       </li>
     ))}
   </ul>

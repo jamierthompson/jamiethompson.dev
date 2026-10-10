@@ -25,7 +25,7 @@ const backlinks = await getBacklinks("projects", project.id);
 >
   <article>
     <h1>{project.data.title}</h1>
-    <p class="muted">
+    <p class="text-muted-foreground">
       <time datetime={project.data.pubDate.toISOString()}>
         {formatDate(project.data.pubDate)}
       </time>

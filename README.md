@@ -10,7 +10,22 @@ Built with [Astro](https://astro.build).
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. Slugs are unique across collections (the build fails on a
   collision); a link to an unwritten slug lands in `/notes/` and renders with the `new` class
+- **Tailwind CSS v4** via `@tailwindcss/vite`, with `@tailwindcss/typography` for prose
+- **Geist / Geist Mono**, self-hosted at build time by Astro's Fonts API
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)
+
+## Theming
+
+Design tokens live in `src/styles/global.css` — shadcn/ui's neutral base color,
+so registry components drop in unchanged. Raw values are CSS variables on `:root`
+(light) and `.dark`, mapped into Tailwind in `@theme inline` (`bg-background`,
+`text-muted-foreground`, …). Every color is a `name` / `name-foreground` pair;
+add new ones under both `:root` and `.dark`, wrapped in `oklch()`.
+
+Dark mode is class-based. An inline script in `src/layouts/Base.astro` sets
+`.dark` on `<html>` before first paint, and `SchemeToggle.astro` offers
+Light / Dark / Auto (Auto follows the OS and is the default). Both read the
+`scheme` localStorage key.
 
 ## Develop
 
@@ -59,4 +74,5 @@ src/
   layouts/          # the page shell — head tags, nav, tokens
   lib/              # build-time helpers, tests beside them
   pages/            # routes
+  styles/           # global.css — Tailwind entry and design tokens
 ```

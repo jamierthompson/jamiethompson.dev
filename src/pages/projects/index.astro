@@ -13,12 +13,14 @@ const projects = (
 >
   <h1>Projects</h1>
   <p>Things I have designed and built.</p>
-  {projects.length === 0 && <p class="muted">First project in progress.</p>}
+  {projects.length === 0 && (
+    <p class="text-muted-foreground">First project in progress.</p>
+  )}
   <ul>
     {projects.map((project) => (
       <li>
         <a href={`/projects/${project.id}/`}>{project.data.title}</a>
-        <p class="muted">{project.data.description}</p>
+        <p class="text-muted-foreground">{project.data.description}</p>
       </li>
     ))}
   </ul>

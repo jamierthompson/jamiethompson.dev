@@ -26,10 +26,50 @@ function channel(value: number): number {
   return srgb <= 0.03928 ? srgb / 12.92 : ((srgb + 0.055) / 1.055) ** 2.4;
 }
 
-/** WCAG 2.2 relative luminance, from an `rgb(r, g, b)` computed value. */
+/**
+ * Linear-light sRGB from an `oklch(L C H)` computed value — the form Chrome
+ * reports for colors authored in oklch, which the design tokens are. This is
+ * the OKLab → linear sRGB matrix from Björn Ottosson's reference, clamped to
+ * the sRGB gamut the page is displayed in.
+ */
+function oklchToLinearSrgb(color: string): [number, number, number] {
+  const [l, c, h] = (color.match(/-?\d*\.?\d+(?:e-?\d+)?/g) ?? []).map(Number);
+  const hue = ((h || 0) * Math.PI) / 180;
+  const a = c * Math.cos(hue);
+  const b = c * Math.sin(hue);
+  const lms = [
+    l + 0.3963377774 * a + 0.2158037573 * b,
+    l - 0.1055613458 * a - 0.0638541728 * b,
+    l - 0.0894841775 * a - 1.291485548 * b,
+  ].map((value) => value ** 3);
+  const clamp = (value: number) => Math.min(1, Math.max(0, value));
+  return [
+    clamp(
+      4.0767416621 * lms[0] - 3.3077115913 * lms[1] + 0.2309699292 * lms[2],
+    ),
+    clamp(
+      -1.2684380046 * lms[0] + 2.6097574011 * lms[1] - 0.3413193965 * lms[2],
+    ),
+    clamp(
+      -0.0041960863 * lms[0] - 0.7034186147 * lms[1] + 1.707614701 * lms[2],
+    ),
+  ];
+}
+
+/**
+ * WCAG 2.2 relative luminance, from a computed color: `rgb(r, g, b)` or
+ * `oklch(L C H)`. Anything else fails loudly rather than reading as black.
+ */
 function luminance(color: string): number {
-  const [r, g, b] = (color.match(/\d+(\.\d+)?/g) ?? []).map(Number);
-  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  if (color.startsWith("oklch(")) {
+    const [r, g, b] = oklchToLinearSrgb(color);
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+  }
+  if (color.startsWith("rgb")) {
+    const [r, g, b] = (color.match(/\d+(\.\d+)?/g) ?? []).map(Number);
+    return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b);
+  }
+  throw new Error(`luminance() cannot read the color "${color}"`);
 }
 
 function contrastRatio(a: string, b: string): number {
@@ -330,7 +370,7 @@ test.describe("the marker", () => {
       const holder = document.createElement("div");
       holder.innerHTML = `
       <p><a id="probe-image" href="https://example.com/" data-external><img src="/favicon.svg" alt="Example" width="16" height="16"></a></p>
-      <h2><a id="probe-heading" href="https://example.com/" data-external>heading link</a></h2>
+      <h2 style="font-size: 1.5em"><a id="probe-heading" href="https://example.com/" data-external>heading link</a></h2>
       <div style="display: flex; gap: 1rem"><a id="probe-flex" href="https://example.com/" data-external>flex link</a><span>after</span></div>
     `;
       document.querySelector("main")?.append(holder);

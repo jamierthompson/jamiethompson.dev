@@ -2,8 +2,9 @@
 import type { GetStaticPaths } from "astro";
 import { getCollection, render } from "astro:content";
 import Base from "../../layouts/Base.astro";
+import BackLink from "../../components/BackLink.astro";
 import Backlinks from "../../components/Backlinks.astro";
-import { formatDate } from "../../lib/formatDate";
+import ExternalLink from "../../components/ExternalLink.astro";
 import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
@@ -17,20 +18,40 @@ export const getStaticPaths = (async () => {
 const { project } = Astro.props;
 const { Content } = await render(project);
 const backlinks = await getBacklinks("projects", project.id);
+const { url } = project.data;
 ---
 
 <Base
   title={`${project.data.title} — Jamie Thompson`}
   description={project.data.description}
 >
+  <BackLink />
   <article>
-    <h1>{project.data.title}</h1>
-    <p class="text-muted-foreground">
-      <time datetime={project.data.pubDate.toISOString()}>
-        {formatDate(project.data.pubDate)}
-      </time>
-    </p>
-    <Content />
+    <header class="enter flex items-center gap-4" style="--stagger: 1">
+      <span
+        aria-hidden="true"
+        class="grid size-12 shrink-0 place-items-center rounded-xl border bg-card font-mono text-muted-foreground shadow-xs"
+      >
+        {project.data.title.charAt(0)}
+      </span>
+      <div class="min-w-0">
+        <h1 class="font-medium">{project.data.title}</h1>
+        <p class="text-muted-foreground">{project.data.description}</p>
+      </div>
+    </header>
+    {url && (
+      <p class="enter mt-6" style="--stagger: 2">
+        <ExternalLink
+          href={url}
+          class="text-muted-foreground underline decoration-border underline-offset-[3px] transition-colors hover:text-foreground"
+        >
+          {new URL(url).host}
+        </ExternalLink>
+      </p>
+    )}
+    <div class="enter prose mt-8" style="--stagger: 3">
+      <Content />
+    </div>
   </article>
 
   <Backlinks backlinks={backlinks} />

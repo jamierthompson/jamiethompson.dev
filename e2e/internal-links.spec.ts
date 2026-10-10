@@ -9,7 +9,7 @@ import { expect, test } from "@playwright/test";
  */
 const DIST = "dist";
 
-// Files only. A recursive listing yields directories too, and `/essays` would
+// Files only. A recursive listing yields directories too, and `/writing` would
 // then pass by matching a directory as though it were a static asset rather
 // than by resolving to a route.
 const files = readdirSync(DIST, { recursive: true, withFileTypes: true })
@@ -22,7 +22,7 @@ const routes = new Set(
 );
 const assets = new Set(files.map((file) => `/${file}`));
 
-/** `astro preview` serves `/notes` and `/notes/` alike, so both resolve. */
+/** `astro preview` serves `/writing/x` and `/writing/x/` alike, so both resolve. */
 function resolves(target: string): boolean {
   return routes.has(target) || routes.has(`${target}/`) || assets.has(target);
 }
@@ -34,8 +34,9 @@ function rootRelativeHrefs(html: string): string[] {
 }
 
 test("every root-relative link resolves to a page the build emitted", () => {
-  // A glob that silently matched nothing would pass this vacuously.
-  expect(pages.length).toBeGreaterThan(5);
+  // A glob that silently matched nothing would pass this vacuously. The
+  // fixtures build the home page, two posts and a project.
+  expect(pages.length).toBeGreaterThanOrEqual(4);
 
   const dangling: string[] = [];
   for (const page of pages) {
@@ -54,9 +55,9 @@ test("every root-relative link resolves to a page the build emitted", () => {
   expect(dangling).toEqual([]);
 });
 
-test("no wikilink renders as a link to a note that does not exist", () => {
+test("no wikilink renders as a link to an entry that does not exist", () => {
   // remark-wiki-link appends `new` to the class of a target missing from
-  // `permalinks`, so an unwritten note is visible in the markup rather than
+  // `permalinks`, so an unwritten entry is visible in the markup rather than
   // only as a 404 someone has to click to find.
   const unresolved: string[] = [];
   for (const page of pages) {

@@ -13,7 +13,7 @@ const routes = readdirSync("dist", { recursive: true })
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
 
 /** A markdown-authored link, the surface the rehype plugin owns. */
-const MARKDOWN_LINK_ROUTE = "/essays/fixture-essay/";
+const MARKDOWN_LINK_ROUTE = "/writing/fixture-essay/";
 const MARKDOWN_LINK_NAME = "an external reference";
 /** The `.astro` surface, rendered by the component on the index page. */
 const COMPONENT_LINK_NAME = "agent-conventions";
@@ -84,8 +84,9 @@ test.describe("the contract, across every built page", () => {
   test("every link that leaves the site carries the external-link contract", async ({
     page,
   }) => {
-    // A glob that silently matched nothing would pass this test vacuously.
-    expect(routes.length).toBeGreaterThan(5);
+    // A glob that silently matched nothing would pass this test vacuously. The
+    // fixtures build the home page, two posts and a project.
+    expect(routes.length).toBeGreaterThanOrEqual(4);
 
     const violations: string[] = [];
 
@@ -348,11 +349,13 @@ test.describe("the marker", () => {
     expect(clip.x).toBeGreaterThanOrEqual(0);
     expect(clip.y).toBeGreaterThanOrEqual(0);
 
-    const painted = await page.screenshot({ clip });
+    // `animations: "disabled"` fast-forwards the entrance fade to its end;
+    // mid-fade, both shots can catch the column still transparent.
+    const painted = await page.screenshot({ clip, animations: "disabled" });
     await page.addStyleTag({
       content: "a[data-external]::after { background-color: transparent; }",
     });
-    const unpainted = await page.screenshot({ clip });
+    const unpainted = await page.screenshot({ clip, animations: "disabled" });
 
     expect(painted.equals(unpainted)).toBe(false);
   });
@@ -589,19 +592,25 @@ test.describe("focus and the keyboard path", () => {
 });
 
 test.describe("target size", () => {
-  test("the site navigation clears the minimum target size", async ({
+  test("the header's toggle and an entry's back button clear the minimum target size", async ({
     page,
   }) => {
-    // The inline exception covers links inside a sentence; a nav bar is not a
-    // sentence, so these are measured against the floor.
+    // The inline exception covers links inside a sentence; these controls sit
+    // alone, so they are measured against the floor.
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
+    await page.goto("/writing/fixture-essay/");
 
-    const small = await page.locator("header nav a").evaluateAll(
+    const controls = page.locator(
+      'header button, a[href="/"][aria-label="Home"]',
+    );
+    await expect(controls).toHaveCount(4);
+    const small = await controls.evaluateAll(
       (elements, floor) =>
         elements
           .map((element) => ({
-            name: (element.textContent ?? "").trim(),
+            name:
+              element.getAttribute("aria-label") ??
+              (element.textContent ?? "").trim(),
             rect: element.getBoundingClientRect(),
           }))
           .filter(({ rect }) => rect.width < floor || rect.height < floor)

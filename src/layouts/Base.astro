@@ -110,37 +110,12 @@ const TWITTER_CARD = "summary";
   </head>
   <body class="flex min-h-svh flex-col">
     <header>
-      <div class="mx-auto flex w-full max-w-6xl items-center justify-between gap-4 px-4 py-4">
-        <nav aria-label="Site" class="flex flex-wrap gap-x-5 gap-y-1">
-          <a href="/" class="inline-flex min-h-6 items-center font-medium">
-            Jamie Thompson
-          </a>
-          <a
-            href="/projects/"
-            class="inline-flex min-h-6 items-center text-muted-foreground hover:text-foreground"
-          >
-            Projects
-          </a>
-          <a
-            href="/essays/"
-            class="inline-flex min-h-6 items-center text-muted-foreground hover:text-foreground"
-          >
-            Essays
-          </a>
-          <a
-            href="/notes/"
-            class="inline-flex min-h-6 items-center text-muted-foreground hover:text-foreground"
-          >
-            Notes
-          </a>
-        </nav>
+      <div class="flex w-full items-center justify-end px-4 py-4">
         <SchemeToggle />
       </div>
     </header>
     <main class="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-16">
-      {/* Content is left-aligned under the header, capped at a reading
-          measure by `prose`, so its edge lines up with the site name. */}
-      <div class="prose prose-neutral dark:prose-invert">
+      <div class="max-w-[65ch]">
         <slot />
       </div>
     </main>

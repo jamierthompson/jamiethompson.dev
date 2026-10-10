@@ -14,7 +14,7 @@ const routes = readdirSync("dist", { recursive: true })
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
 
 /** A route with a path segment, where a relative canonical would show up. */
-const NESTED_ROUTE = "/essays/fixture-essay/";
+const NESTED_ROUTE = "/writing/fixture-essay/";
 const NESTED_TITLE = "A fixture essay";
 /** The suffix every page but the index appends to its `<title>`. */
 const TITLE_SUFFIX = " — Jamie Thompson";
@@ -80,8 +80,9 @@ test.describe("the canonical URL", () => {
   test("the canonical URL is absolute and names the route, on every page", async ({
     page,
   }) => {
-    // A glob that silently matched nothing would pass this test vacuously.
-    expect(routes.length).toBeGreaterThan(5);
+    // A glob that silently matched nothing would pass this test vacuously. The
+    // fixtures build the home page, two posts and a project.
+    expect(routes.length).toBeGreaterThanOrEqual(4);
 
     const violations: string[] = [];
     for (const route of routes) {
@@ -98,7 +99,7 @@ test.describe("the canonical URL", () => {
         );
       }
       // `new URL(pathname, SITE_URL)` cannot double a slash, but a later switch
-      // to string concatenation could, and `//notes/` is a different page.
+      // to string concatenation could, and `//writing/` is a different page.
       if (head.canonical && /(?<!:)\/\//.test(head.canonical)) {
         violations.push(`${route}: canonical has a doubled slash`);
       }
@@ -123,15 +124,15 @@ test.describe("the canonical URL", () => {
   test("the slashless URL of a page points its canonical at the slashed one", async ({
     page,
   }) => {
-    // `astro preview` serves `/notes` and `/notes/` as the same 200, which is
+    // `astro preview` serves `/writing/fixture-note` and `/writing/fixture-note/` as the same 200, which is
     // two URLs for one page — deduplicating them is the canonical's whole job,
     // so the slashless one has to name the slashed one and not itself.
-    const response = await page.goto("/notes");
+    const response = await page.goto("/writing/fixture-note");
     expect(response?.status()).toBe(200);
 
     const head = await readHead(page);
-    expect(head.canonical).toBe(`${SITE_URL}/notes/`);
-    expect(head.og["og:url"]).toBe(`${SITE_URL}/notes/`);
+    expect(head.canonical).toBe(`${SITE_URL}/writing/fixture-note/`);
+    expect(head.og["og:url"]).toBe(`${SITE_URL}/writing/fixture-note/`);
   });
 
   test("no page declares a canonical off the site's own origin", async ({

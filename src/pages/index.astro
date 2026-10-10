@@ -1,71 +1,125 @@
 ---
 import { getCollection } from "astro:content";
+import ArrowRight from "@lucide/astro/icons/arrow-right";
 import Base from "../layouts/Base.astro";
 import ExternalLink from "../components/ExternalLink.astro";
 
-const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
-const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
-  (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
-);
+const byNewest = (
+  a: { data: { pubDate: Date } },
+  b: { data: { pubDate: Date } },
+) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
+
 const projects = (
   await getCollection("projects", ({ data }) => !data.draft)
-).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
+).sort(byNewest);
+const writing = (
+  await getCollection("writing", ({ data }) => !data.draft)
+).sort(byNewest);
+
+/** Month and year is enough on a list; the post itself carries the day. */
+const monthYear = (date: Date) =>
+  date.toLocaleDateString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+/** A row is a link that spans the column, with a quiet wash on hover. */
+const row =
+  "group -mx-3 flex items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/70";
 ---
 
 <Base
   title="Jamie Thompson"
-  description="Writing about the things I build: short notes holding one idea each, and long-form essays."
+  description="Design engineer. Projects, and writing about the things I build."
 >
-  <h1>Jamie Thompson</h1>
-  <p>
-    I'm a software engineer, and this is where I write about the things I build,
-    in two forms. <a href="/notes/">Notes</a> hold one idea each, written when I
-    run into it. <a href="/essays/">Essays</a> make the longer arguments,
-    usually out of notes that piled up first.
-  </p>
-  <p>
-    The working rules I give AI agents are public at{" "}
-    <ExternalLink href="https://github.com/jamiethompsondesign/agent-conventions">
-      agent-conventions
-    </ExternalLink>
-    .
-  </p>
+  <header class="enter flex items-center gap-3">
+    {/* Initials until there's a photo: drop one in public/ and swap this for
+        an <img>, keeping the size and the rounding. */}
+    <span
+      aria-hidden="true"
+      class="grid size-10 shrink-0 place-items-center rounded-full bg-foreground font-mono text-xs font-medium tracking-tight text-background"
+    >
+      JT
+    </span>
+    <div>
+      <h1 class="font-medium">Jamie Thompson</h1>
+      <p class="text-muted-foreground">Design engineer</p>
+    </div>
+  </header>
+
+  <div class="enter prose mt-8" style="--stagger: 1">
+    <p>
+      I'm a design engineer, and this is where I keep the things I build and the
+      writing that comes out of building them.
+    </p>
+    <p>
+      The working rules I give AI agents are public at{" "}
+      <ExternalLink href="https://github.com/jamiethompsondesign/agent-conventions">
+        agent-conventions
+      </ExternalLink>
+      .
+    </p>
+  </div>
 
   {projects.length > 0 && (
-    <section>
-      <h2>Projects</h2>
+    <section
+      class="enter mt-16"
+      style="--stagger: 2"
+      aria-labelledby="projects"
+    >
+      <h2 id="projects" class="mb-3 font-medium">
+        Projects
+      </h2>
       <ul>
-        {projects.slice(0, 5).map((project) => (
+        {projects.map((project) => (
           <li>
-            <a href={`/projects/${project.id}/`}>{project.data.title}</a>
+            <a href={`/projects/${project.id}/`} class={row}>
+              <span
+                aria-hidden="true"
+                class="grid size-10 shrink-0 place-items-center rounded-[10px] border bg-card font-mono text-sm text-muted-foreground shadow-xs transition-colors group-hover:text-foreground"
+              >
+                {project.data.title.charAt(0)}
+              </span>
+              <span class="flex min-w-0 flex-col">
+                <span class="font-medium">{project.data.title}</span>
+                <span class="text-muted-foreground">
+                  {project.data.description}
+                </span>
+              </span>
+            </a>
           </li>
         ))}
       </ul>
     </section>
   )}
 
-  {essays.length > 0 && (
-    <section>
-      <h2>Essays</h2>
+  {writing.length > 0 && (
+    <section class="enter mt-14" style="--stagger: 3" aria-labelledby="writing">
+      <h2 id="writing" class="mb-3 font-medium">
+        Writing
+      </h2>
       <ul>
-        {essays.slice(0, 5).map((essay) => (
+        {writing.map((post) => (
           <li>
-            <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
-
-  {notes.length > 0 && (
-    <section>
-      <h2>Notes</h2>
-      <ul>
-        {notes.slice(0, 5).map((note) => (
-          <li>
-            <a href={`/notes/${note.id}/`}>{note.data.title}</a>
+            <a href={`/writing/${post.id}/`} class={row}>
+              <span class="flex min-w-0 flex-1 flex-col">
+                <span class="font-medium">
+                  {post.data.title}
+                  <ArrowRight
+                    aria-hidden="true"
+                    class="ml-1 inline size-4 -translate-x-1 align-[-0.15em] text-muted-foreground opacity-0 transition duration-200 group-hover:translate-x-0 group-hover:opacity-100"
+                  />
+                </span>
+                <span class="text-muted-foreground">{post.data.category}</span>
+              </span>
+              <time
+                datetime={post.data.pubDate.toISOString()}
+                class="shrink-0 self-start pt-px text-sm text-muted-foreground tabular-nums"
+              >
+                {monthYear(post.data.pubDate)}
+              </time>
+            </a>
           </li>
         ))}
       </ul>

@@ -9,13 +9,23 @@ const { backlinks } = Astro.props;
 ---
 
 {backlinks.length > 0 && (
-  <aside aria-labelledby="backlinks-heading">
-    <hr />
-    <h2 id="backlinks-heading">Referenced by</h2>
+  <aside
+    aria-labelledby="backlinks-heading"
+    class="enter mt-16 border-t pt-8"
+    style="--stagger: 4"
+  >
+    <h2 id="backlinks-heading" class="mb-2 text-muted-foreground">
+      Referenced by
+    </h2>
     <ul>
       {backlinks.map((source) => (
         <li>
-          <a href={`/${source.collection}/${source.id}/`}>{source.title}</a>
+          <a
+            href={`/${source.collection}/${source.id}/`}
+            class="-mx-3 block rounded-xl px-3 py-2 font-medium transition-colors hover:bg-muted/70"
+          >
+            {source.title}
+          </a>
         </li>
       ))}
     </ul>

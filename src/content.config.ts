@@ -17,9 +17,10 @@ const writing = defineCollection({
   schema: entrySchema.extend({ category: z.string() }),
 });
 
+/** `url` is where the thing itself lives, when it lives somewhere. */
 const projects = defineCollection({
   loader: glob({ pattern: "*.{md,mdx}", base: `${CONTENT_DIR}/projects` }),
-  schema: entrySchema,
+  schema: entrySchema.extend({ url: z.url().optional() }),
 });
 
 export const collections = { writing, projects };

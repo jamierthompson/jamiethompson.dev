@@ -149,3 +149,114 @@ a[data-external]::after {
     background-color: LinkText;
   }
 }
+
+/*
+ * Prose
+ * -----
+ * One size throughout: hierarchy comes from weight and from how far a gray
+ * sits from the background, not from scale. The typography plugin's color
+ * slots are fed from the tokens, so the same rules serve both schemes with no
+ * `prose-invert`.
+ */
+.prose {
+  --tw-prose-body: color-mix(
+    in oklch,
+    var(--foreground) 80%,
+    var(--background)
+  );
+  --tw-prose-headings: var(--foreground);
+  --tw-prose-lead: var(--muted-foreground);
+  --tw-prose-links: var(--foreground);
+  --tw-prose-bold: var(--foreground);
+  --tw-prose-counters: var(--muted-foreground);
+  --tw-prose-bullets: var(--border);
+  --tw-prose-hr: var(--border);
+  --tw-prose-quotes: var(--foreground);
+  --tw-prose-quote-borders: var(--border);
+  --tw-prose-captions: var(--muted-foreground);
+  --tw-prose-code: var(--foreground);
+  --tw-prose-pre-code: var(--foreground);
+  --tw-prose-pre-bg: var(--muted);
+  --tw-prose-th-borders: var(--border);
+  --tw-prose-td-borders: var(--border);
+  font-size: 1rem;
+  line-height: 1.65;
+
+  :where(h1, h2, h3, h4) {
+    font-size: 1em;
+    font-weight: 550;
+    line-height: 1.5;
+  }
+
+  /* A hairline runs from the heading to the column's edge, marking the
+     section break without a bigger font doing it. */
+  :where(h2) {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-top: 3em;
+  }
+
+  :where(h2)::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  :where(a) {
+    font-weight: inherit;
+    text-decoration-color: color-mix(in oklch, currentColor 35%, transparent);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 150ms;
+  }
+
+  :where(a):hover {
+    text-decoration-color: currentColor;
+  }
+
+  :where(blockquote) {
+    font-style: normal;
+    font-weight: inherit;
+  }
+
+  /* A tinted chip instead of the plugin's literal backticks. */
+  :where(:not(pre) > code) {
+    padding: 0.125em 0.375em;
+    border-radius: var(--radius-sm);
+    background: var(--muted);
+    font-size: 0.875em;
+    font-weight: 450;
+  }
+
+  :where(code)::before,
+  :where(code)::after {
+    content: none;
+  }
+}
+
+/*
+ * Entrance
+ * --------
+ * Each `.enter` block fades up in turn; `--stagger` (0, 1, 2…) is its place
+ * in the sequence. Pure CSS, so it runs without scripts, and it is skipped
+ * entirely for anyone who has asked for less motion.
+ */
+@keyframes enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+}
+
+.enter {
+  animation: enter 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation-delay: calc(var(--stagger, 0) * 80ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter {
+    animation: none;
+  }
+}

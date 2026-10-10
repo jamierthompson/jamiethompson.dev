@@ -110,43 +110,37 @@ describe("isExternalHref", () => {
 
   it("takes the site's scheme for a protocol-relative URL", () => {
     expect(isExternalHref("//example.com/x")).toBe(true);
-    expect(isExternalHref("//www.jamiethompson.design/essays/")).toBe(false);
-    expect(isExternalHref("//WWW.JAMIETHOMPSON.DESIGN/x")).toBe(false);
+    expect(isExternalHref("//jamiethompson.design/essays/")).toBe(false);
+    expect(isExternalHref("//JAMIETHOMPSON.DESIGN/x")).toBe(false);
   });
 
   it("compares origins, not prefixes", () => {
-    expect(isExternalHref("https://www.jamiethompson.design/essays/x/")).toBe(
+    expect(isExternalHref("https://jamiethompson.design/essays/x/")).toBe(
       false,
     );
-    expect(isExternalHref("https://www.jamiethompson.design.example.com")).toBe(
+    expect(isExternalHref("https://jamiethompson.design.example.com")).toBe(
       true,
     );
     expect(isExternalHref("https://notjamiethompson.design")).toBe(true);
   });
 
   it("does not let userinfo spoof the origin", () => {
-    expect(isExternalHref("https://www.jamiethompson.design@evil.com/")).toBe(
-      true,
-    );
-    expect(isExternalHref("https://user@www.jamiethompson.design/x")).toBe(
-      false,
-    );
+    expect(isExternalHref("https://jamiethompson.design@evil.com/")).toBe(true);
+    expect(isExternalHref("https://user@jamiethompson.design/x")).toBe(false);
   });
 
   it("normalizes the default port", () => {
-    expect(isExternalHref("https://www.jamiethompson.design:443/x")).toBe(
-      false,
-    );
+    expect(isExternalHref("https://jamiethompson.design:443/x")).toBe(false);
     expect(isExternalHref("https://example.com:8080")).toBe(true);
   });
 
   it("ignores case in the scheme and host", () => {
-    expect(isExternalHref("HTTPS://WWW.JAMIETHOMPSON.DESIGN/x")).toBe(false);
+    expect(isExternalHref("HTTPS://JAMIETHOMPSON.DESIGN/x")).toBe(false);
     expect(isExternalHref("MAILTO:me@example.com")).toBe(true);
   });
 
   it("treats a scheme downgrade to the same host as leaving", () => {
-    expect(isExternalHref("http://www.jamiethompson.design/x")).toBe(true);
+    expect(isExternalHref("http://jamiethompson.design/x")).toBe(true);
   });
 
   it("leaves same-document hrefs alone", () => {
@@ -192,8 +186,8 @@ describe("isExternalHref resolves an href the way a browser resolves the attribu
   it.each(["/\\example.com", "\\\\example.com", "/\\example.com/path"])(
     "counts %s as leaving, since a browser resolves it off-origin",
     (href) => {
-      const resolved = new URL(href, "https://www.jamiethompson.design/page/");
-      expect(resolved.origin).not.toBe("https://www.jamiethompson.design");
+      const resolved = new URL(href, "https://jamiethompson.design/page/");
+      expect(resolved.origin).not.toBe("https://jamiethompson.design");
       expect(isExternalHref(href)).toBe(true);
     },
   );
@@ -203,12 +197,11 @@ describe("isExternalHref resolves an href the way a browser resolves the attribu
   // `https:evil.com` stays on this origin.
   it("counts a same-scheme relative href as staying put", () => {
     expect(
-      new URL("https:evil.com", "https://www.jamiethompson.design/page/")
-        .origin,
-    ).toBe("https://www.jamiethompson.design");
+      new URL("https:evil.com", "https://jamiethompson.design/page/").origin,
+    ).toBe("https://jamiethompson.design");
     expect(isExternalHref("https:evil.com")).toBe(false);
     expect(
-      new URL("http:evil.com", "https://www.jamiethompson.design/page/").origin,
+      new URL("http:evil.com", "https://jamiethompson.design/page/").origin,
     ).toBe("http://evil.com");
     expect(isExternalHref("http:evil.com")).toBe(true);
   });
@@ -217,8 +210,8 @@ describe("isExternalHref resolves an href the way a browser resolves the attribu
     const anchor = await renderAnchor("[x](/\\example.com)");
     expect(anchor.href).toBe("/%5Cexample.com");
     expect(
-      new URL(anchor.href!, "https://www.jamiethompson.design/page/").origin,
-    ).toBe("https://www.jamiethompson.design");
+      new URL(anchor.href!, "https://jamiethompson.design/page/").origin,
+    ).toBe("https://jamiethompson.design");
   });
 
   it("cannot depend on where in the site the link was written", () => {
@@ -253,28 +246,26 @@ describe("isExternalHref resolves an href the way a browser resolves the attribu
 describe("isExternalHref on hosts near the site's own origin", () => {
   it("calls a host that only looks like ours leaving", () => {
     // Each of these really is a distinct origin, and each is reached by a
-    // separate request — the trailing-dot and bare-apex forms redirect back.
-    expect(isExternalHref("https://jamiethompson.design/x")).toBe(true);
-    expect(isExternalHref("https://www.jamiethompson.design./x")).toBe(true);
-    expect(isExternalHref("https://www.jamiethompson.design:80/x")).toBe(true);
+    // separate request — the trailing-dot and `www` forms redirect back.
+    expect(isExternalHref("https://www.jamiethompson.design/x")).toBe(true);
+    expect(isExternalHref("https://jamiethompson.design./x")).toBe(true);
+    expect(isExternalHref("https://jamiethompson.design:80/x")).toBe(true);
   });
 
   it("sees through host encodings the URL parser normalizes", () => {
     // The parser percent-decodes and IDNA-maps the host before comparing, so
     // a disguised spelling of our own host stays internal and a disguised
     // spelling of someone else's does not.
-    expect(new URL("https://www%2ejamiethompson%2edesign/x").origin).toBe(
+    expect(new URL("https://jamiethompson%2edesign/x").origin).toBe(
       SITE_ORIGIN,
     );
-    expect(isExternalHref("https://www%2ejamiethompson%2edesign/x")).toBe(
+    expect(isExternalHref("https://jamiethompson%2edesign/x")).toBe(false);
+    expect(isExternalHref("https://ｊａｍｉｅｔｈｏｍｐｓｏｎ.design/x")).toBe(
       false,
     );
-    expect(
-      isExternalHref("https://ｗｗｗ.ｊａｍｉｅｔｈｏｍｐｓｏｎ.design/x"),
-    ).toBe(false);
-    expect(isExternalHref("https://www。jamiethompson。design/x")).toBe(false);
+    expect(isExternalHref("https://jamiethompson。design/x")).toBe(false);
     expect(isExternalHref("https://evil%2ecom/x")).toBe(true);
-    expect(isExternalHref("https://www.jamiethompson.design。evil.com/")).toBe(
+    expect(isExternalHref("https://jamiethompson.design。evil.com/")).toBe(
       true,
     );
   });
@@ -288,7 +279,7 @@ describe("isExternalHref on hosts near the site's own origin", () => {
 describe("isExternalHref never calls a leaving link internal", () => {
   it("agrees with the platform parser across a seeded fuzz", () => {
     // A page deep in the site, to prove the base's *path* cannot matter.
-    const page = "https://www.jamiethompson.design/essays/deep/page/";
+    const page = "https://jamiethompson.design/essays/deep/page/";
     const alphabet = [
       ..."htps:/\\.@?#%2eavilcomjd-",
       " ",
@@ -373,7 +364,7 @@ describe("rehypeMarkExternalLinks applies isExternalHref and nothing else", () =
     [`//example.com/x`, true],
     [`/notes/x/`, false],
     [`#frag`, false],
-    [`https://www.jamiethompson.design/x`, false],
+    [`https://jamiethompson.design/x`, false],
     [`tel:+15550000000`, false],
   ])(
     "marks %j exactly when the rule calls it leaving",
@@ -480,9 +471,9 @@ describe("the markdown surface marks what the rule calls leaving", () => {
     "/notes/no-prior-context/",
     "#a-heading",
     "?q=1",
-    "https://www.jamiethompson.design/essays/",
-    "//www.jamiethompson.design/essays/",
-    "https://user@www.jamiethompson.design/x",
+    "https://jamiethompson.design/essays/",
+    "//jamiethompson.design/essays/",
+    "https://user@jamiethompson.design/x",
     "tel:+15550000000",
   ])("leaves %s completely untouched", async (href) => {
     const anchor = await renderAnchor(`[link text](${href})`);
@@ -582,7 +573,7 @@ describe("the markdown surface emits the href as authored", () => {
 describe("the markdown surface decides per link", () => {
   it("decides per link, with no marker bleeding between them", async () => {
     const { code } = await renderer.render(
-      "[a](https://e.com/1) [b](/in/) [c](mailto:x@y.z) [d](https://www.jamiethompson.design/x)",
+      "[a](https://e.com/1) [b](/in/) [c](mailto:x@y.z) [d](https://jamiethompson.design/x)",
       {},
     );
     const marked = [...code.matchAll(/<a\b[^>]*>/g)].map((m) =>

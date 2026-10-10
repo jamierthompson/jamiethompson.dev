@@ -68,9 +68,9 @@ Vercel's build-and-deploy check.
 
 Vercel project `jamiethompson.design` (team `jamie-studio`), connected to this
 repo: every push to `main` deploys to production, every pull request gets a
-preview. The canonical host is `www.jamiethompson.design` — it is `SITE_URL` in
-`src/lib/site.ts` — and `jamiethompson.design`, `jamiethompsondesign.com` and
-`www.jamiethompsondesign.com` 308-redirect to it.
+preview. The canonical host is `jamiethompson.design` — it is `SITE_URL` in
+`src/lib/site.ts` — and `www.jamiethompson.design`, `jamiethompsondesign.com`
+and `www.jamiethompsondesign.com` 308-redirect to it.
 
 ## Structure
 

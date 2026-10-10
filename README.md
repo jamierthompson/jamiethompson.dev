@@ -1,24 +1,24 @@
 # jamiethompson.design
 
-Projects, essays and notes, linked to each other.
+Projects and writing.
 Built with [Astro](https://astro.build).
 
 ## Stack
 
 - **Astro** — static output; interactive islands only where a page embeds a demo
-- **Content collections** — `projects/`, `essays/` and `notes/` as markdown/MDX with typed frontmatter
+- **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
+  Writing adds a required `category`; projects take an optional `url` to the shipped project
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. Slugs are unique across collections (the build fails on a
-  collision); a link to an unwritten slug lands in `/notes/` and renders with the `new` class
+  collision); a link to an unwritten slug lands in `/writing/` and renders with the `new` class
 - **Tailwind CSS v4** via `@tailwindcss/vite`, with `@tailwindcss/typography` for prose
 - **Geist / Geist Mono**, self-hosted at build time by Astro's Fonts API
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)
 
 ## Theming
 
-Design tokens live in `src/styles/global.css` — shadcn/ui's neutral base color,
-so registry components drop in unchanged. Raw values are CSS variables on `:root`
-(light) and `.dark`, mapped into Tailwind in `@theme inline` (`bg-background`,
+Design tokens live in `src/styles/global.css`. Raw values are CSS variables on `:root` (light)
+and `.dark`, mapped into Tailwind in `@theme inline` (`bg-background`,
 `text-muted-foreground`, …). Every color is a `name` / `name-foreground` pair;
 add new ones under both `:root` and `.dark`, wrapped in `oklch()`.
 
@@ -77,9 +77,9 @@ and `www.jamiethompsondesign.com` 308-redirect to it.
 ```
 src/
   components/       # shared components
-  content/          # projects, essays and notes (the actual writing)
+  content/          # projects and writing (the content)
   content.config.ts # the collection schemas
-  layouts/          # the page shell — head tags, nav, tokens
+  layouts/          # the page shell — head tags, scheme toggle, tokens
   lib/              # build-time helpers, tests beside them
   pages/            # routes
   styles/           # global.css — Tailwind entry and design tokens

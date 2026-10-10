@@ -5,21 +5,25 @@ import remarkRehype from "remark-rehype";
 import rehypeStringify from "rehype-stringify";
 import { wikiLinkPlugin } from "remark-wiki-link";
 import {
-  buildBacklinkIndex,
   buildReferenceIndex,
   entryFormatFromPath,
   extractInternalLinkTargets,
   extractWikiTargets,
+  findSlugCollisions,
   referenceKey,
+  resolveWikiTarget,
   slugifyWikiTarget,
   wikiLinkOptions,
   type LinkedEntry,
 } from "./wikilinks";
 
-const render = async (md: string): Promise<string> => {
+const render = async (
+  md: string,
+  permalinks: string[] = [],
+): Promise<string> => {
   const file = await unified()
     .use(remarkParse)
-    .use(wikiLinkPlugin, wikiLinkOptions)
+    .use(wikiLinkPlugin, { ...wikiLinkOptions, permalinks })
     .use(remarkRehype)
     .use(rehypeStringify)
     .process(md);
@@ -231,7 +235,7 @@ describe("MDX bodies go through the same extractor as markdown", () => {
   });
 
   it("does not give a real note a phantom row from a JSX prop", () => {
-    const index = buildBacklinkIndex([
+    const index = buildReferenceIndex([
       { collection: "notes", id: "the-qa-rule", title: "Rule", body: "prose" },
       {
         collection: "essays",
@@ -240,7 +244,7 @@ describe("MDX bodies go through the same extractor as markdown", () => {
         body: '<Chart labels={[[ "The QA Rule" ]]} />',
       },
     ]);
-    expect(index.get("the-qa-rule")).toBeUndefined();
+    expect(index.get(referenceKey("notes", "the-qa-rule"))).toBeUndefined();
   });
 });
 
@@ -342,65 +346,6 @@ describe("extractInternalLinkTargets", () => {
   });
 });
 
-describe("buildBacklinkIndex", () => {
-  const entries: LinkedEntry[] = [
-    {
-      collection: "notes",
-      id: "a",
-      title: "Note A",
-      body: "points at [[b]] and itself via [[a]]",
-    },
-    { collection: "notes", id: "b", title: "Note B", body: "no links" },
-    { collection: "essays", id: "e", title: "Essay E", body: "cites [[b]]" },
-  ];
-
-  it("collects every entry linking to a target", () => {
-    const index = buildBacklinkIndex(entries);
-    expect(index.get("b")).toEqual([
-      { collection: "notes", id: "a", title: "Note A" },
-      { collection: "essays", id: "e", title: "Essay E" },
-    ]);
-  });
-
-  it("ignores a note linking to itself", () => {
-    const index = buildBacklinkIndex(entries);
-    expect(index.get("a")).toBeUndefined();
-  });
-
-  it("does not index a phantom backlink from a code sample", () => {
-    const entries: LinkedEntry[] = [
-      { collection: "notes", id: "target", title: "Target", body: "prose" },
-      {
-        collection: "notes",
-        id: "sample",
-        title: "Sample",
-        body: "```\n[[target]]\n```",
-      },
-    ];
-    expect(buildBacklinkIndex(entries).get("target")).toBeUndefined();
-  });
-
-  it("only exempts a NOTE from self-backlinks — an essay with the same id still counts", () => {
-    const entries: LinkedEntry[] = [
-      { collection: "notes", id: "x", title: "Note X", body: "no links" },
-      { collection: "essays", id: "x", title: "Essay X", body: "see [[x]]" },
-    ];
-    expect(buildBacklinkIndex(entries).get("x")).toEqual([
-      { collection: "essays", id: "x", title: "Essay X" },
-    ]);
-  });
-
-  it("aggregates multiple distinct sources in entry order", () => {
-    const entries: LinkedEntry[] = [
-      { collection: "notes", id: "a", title: "A", body: "[[t]]" },
-      { collection: "notes", id: "b", title: "B", body: "[[t]] and [[t]]" },
-      { collection: "essays", id: "c", title: "C", body: "[[T]]" },
-    ];
-    const sources = buildBacklinkIndex(entries).get("t");
-    expect(sources?.map((s) => s.id)).toEqual(["a", "b", "c"]);
-  });
-});
-
 describe("buildReferenceIndex", () => {
   const entry = (
     collection: LinkedEntry["collection"],
@@ -408,11 +353,43 @@ describe("buildReferenceIndex", () => {
     body: string,
   ): LinkedEntry => ({ collection, id, title: `title:${id}`, body });
 
-  it("indexes wikilink references under the notes namespace", () => {
+  it("indexes a wikilink to an unwritten entry under the notes namespace", () => {
     const index = buildReferenceIndex([
       entry("essays", "an-essay", "cites [[a-note]]"),
     ]);
     expect(index.get(referenceKey("notes", "a-note"))).toEqual([
+      { collection: "essays", id: "an-essay", title: "title:an-essay" },
+    ]);
+  });
+
+  it("indexes a wikilink under whichever collection holds the target", () => {
+    const index = buildReferenceIndex([
+      entry(
+        "notes",
+        "a-note",
+        "built in [[the-project]], argued in [[the-essay]]",
+      ),
+      entry("projects", "the-project", "prose"),
+      entry("essays", "the-essay", "prose"),
+    ]);
+    expect(index.get(referenceKey("projects", "the-project"))).toEqual([
+      { collection: "notes", id: "a-note", title: "title:a-note" },
+    ]);
+    expect(index.get(referenceKey("essays", "the-essay"))).toEqual([
+      { collection: "notes", id: "a-note", title: "title:a-note" },
+    ]);
+    expect(index.get(referenceKey("notes", "the-project"))).toBeUndefined();
+  });
+
+  it("indexes internal-link references to projects", () => {
+    const index = buildReferenceIndex([
+      entry(
+        "essays",
+        "an-essay",
+        "shipped as [the project](/projects/the-project/)",
+      ),
+    ]);
+    expect(index.get(referenceKey("projects", "the-project"))).toEqual([
       { collection: "essays", id: "an-essay", title: "title:an-essay" },
     ]);
   });
@@ -469,9 +446,10 @@ describe("buildReferenceIndex", () => {
 });
 
 describe("self-reference exemption compares like with like", () => {
-  // `buildBacklinkIndex` slugifies the target but not `entry.id`, so an id
-  // that is not already slug-shaped escapes the self-link exemption. Astro's
-  // glob loader hands back `data.slug` verbatim when frontmatter declares it.
+  // A wikilink target is always slugified but `entry.id` need not be: Astro's
+  // glob loader hands back `data.slug` verbatim when frontmatter declares it,
+  // so comparing the two raw would let an entry escape the self-link
+  // exemption.
   const unslugged: LinkedEntry = {
     collection: "notes",
     id: "The-QA-Rule",
@@ -485,10 +463,6 @@ describe("self-reference exemption compares like with like", () => {
     );
   });
 
-  it("exempts a note from itself when its id is not slug-shaped", () => {
-    expect(buildBacklinkIndex([unslugged]).get("the-qa-rule")).toBeUndefined();
-  });
-
   it("exempts an entry from itself in the reference index too", () => {
     expect(
       buildReferenceIndex([unslugged]).get(
@@ -498,11 +472,44 @@ describe("self-reference exemption compares like with like", () => {
   });
 });
 
+describe("resolveWikiTarget", () => {
+  it("lands on the collection that holds the target", () => {
+    const keys = new Set(["projects/oklch", "essays/on-color"]);
+    expect(resolveWikiTarget("oklch", keys)).toBe("projects/oklch");
+    expect(resolveWikiTarget("on-color", keys)).toBe("essays/on-color");
+  });
+
+  it("falls back to the notes namespace for an unwritten target", () => {
+    expect(resolveWikiTarget("unwritten", new Set())).toBe("notes/unwritten");
+  });
+});
+
+describe("findSlugCollisions", () => {
+  it("names a slug claimed by more than one collection", () => {
+    expect(
+      findSlugCollisions(["notes/oklch", "projects/oklch", "essays/other"]),
+    ).toEqual(["oklch (notes, projects)"]);
+  });
+
+  it("finds nothing when every slug is unique", () => {
+    expect(findSlugCollisions(["notes/a", "essays/b", "projects/c"])).toEqual(
+      [],
+    );
+  });
+});
+
 describe("rendered output through the real remark pipeline", () => {
-  it("renders [[target]] as an anchor into /notes/", async () => {
+  it("renders [[target]] to an unwritten entry as a new link into /notes/", async () => {
     const html = await render("See [[The QA Rule]].");
     expect(html).toContain('href="/notes/the-qa-rule/"');
+    expect(html).toContain('class="internal new"');
     expect(html).toContain(">The QA Rule</a>");
+  });
+
+  it("renders [[target]] into the collection that holds it", async () => {
+    const html = await render("See [[oklch]].", ["projects/oklch"]);
+    expect(html).toContain('href="/projects/oklch/"');
+    expect(html).not.toContain(" new");
   });
 
   it("renders the alias as the link text", async () => {

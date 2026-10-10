@@ -10,13 +10,20 @@ import type { Node } from "unist";
  * Wikilink conventions shared by the remark pipeline (astro.config.ts) and
  * the backlink index — one definition so they can't drift.
  *
- * `[[target]]` and `[[target|alias]]` resolve into the notes namespace.
- * Targets slugify with github-slugger — the same slugger Astro's glob loader
- * uses for entry ids — so a wikilink can always reach the note it names.
- * A link to a note that doesn't exist yet is allowed by design: it renders
- * with the `new` class (wired via `permalinks` in astro.config.ts) and marks
- * something worth writing later.
+ * `[[target]]` and `[[target|alias]]` resolve to whichever linked collection
+ * has an entry with that slug, which is why slugs must be unique across
+ * collections (see `findSlugCollisions`). Targets slugify with
+ * github-slugger — the same slugger Astro's glob loader uses for entry ids —
+ * so a wikilink can always reach the entry it names. A link to an entry that
+ * doesn't exist yet is allowed by design: it falls back to the notes
+ * namespace, renders with the `new` class (wired via `permalinks` in
+ * astro.config.ts), and marks something worth writing later.
  */
+
+/** In resolution order: the first is also where an unwritten target lands. */
+export const LINKED_COLLECTIONS = ["notes", "essays", "projects"] as const;
+
+export type LinkedCollection = (typeof LINKED_COLLECTIONS)[number];
 
 export function slugifyWikiTarget(name: string): string {
   return slug(name.trim().replace(/\s+/g, " "));
@@ -24,9 +31,41 @@ export function slugifyWikiTarget(name: string): string {
 
 export const wikiLinkOptions = {
   aliasDivider: "|",
-  pageResolver: (name: string): string[] => [slugifyWikiTarget(name)],
-  hrefTemplate: (permalink: string): string => `/notes/${permalink}/`,
+  /** Candidate reference keys, one per collection, in resolution order. */
+  pageResolver: (name: string): string[] =>
+    LINKED_COLLECTIONS.map((collection) =>
+      referenceKey(collection, slugifyWikiTarget(name)),
+    ),
+  hrefTemplate: (permalink: string): string => `/${permalink}/`,
 };
+
+/**
+ * The reference key a wikilink target lands on, by the same rule
+ * remark-wiki-link applies when it renders the link: the first candidate
+ * that exists, else the first candidate.
+ */
+export function resolveWikiTarget(
+  target: string,
+  existingKeys: ReadonlySet<string>,
+): string {
+  const candidates = wikiLinkOptions.pageResolver(target);
+  return candidates.find((key) => existingKeys.has(key)) ?? candidates[0];
+}
+
+/**
+ * Slugs claimed by more than one collection. `[[slug]]` can only name one
+ * entry, so any collision would make a wikilink silently pick a side.
+ */
+export function findSlugCollisions(keys: Iterable<string>): string[] {
+  const collections = new Map<string, string[]>();
+  for (const key of keys) {
+    const [collection, id] = key.split("/");
+    collections.set(id, [...(collections.get(id) ?? []), collection]);
+  }
+  return [...collections]
+    .filter(([, owners]) => owners.length > 1)
+    .map(([id, owners]) => `${id} (${owners.join(", ")})`);
+}
 
 interface WikiLinkNode extends Node {
   value: string;
@@ -114,8 +153,6 @@ export function extractWikiTargets(
   });
 }
 
-export type LinkedCollection = "essays" | "notes";
-
 export interface LinkedEntry {
   collection: LinkedCollection;
   id: string;
@@ -131,34 +168,6 @@ export interface Backlink {
   title: string;
 }
 
-/**
- * Map from a note's id to every entry whose body wikilinks to it.
- *
- * Both sides of the self-link comparison are slugified: a wikilink target
- * always is, but an entry id is only slug-shaped by convention — Astro's
- * glob loader hands back a frontmatter `slug` verbatim — and comparing the
- * two raw would let a note list itself as a backlink to itself.
- */
-export function buildBacklinkIndex(
-  entries: LinkedEntry[],
-): Map<string, Backlink[]> {
-  const index = new Map<string, Backlink[]>();
-  for (const entry of entries) {
-    const selfTarget = slugifyWikiTarget(entry.id);
-    for (const target of extractWikiTargets(entry.body, entry.format)) {
-      if (entry.collection === "notes" && target === selfTarget) continue;
-      const sources = index.get(target) ?? [];
-      sources.push({
-        collection: entry.collection,
-        id: entry.id,
-        title: entry.title,
-      });
-      index.set(target, sources);
-    }
-  }
-  return index;
-}
-
 export function referenceKey(collection: LinkedCollection, id: string): string {
   return `${collection}/${id}`;
 }
@@ -168,7 +177,9 @@ export function referenceKey(collection: LinkedCollection, id: string): string {
  * so it is part of the URL but not part of the id — it is matched and
  * discarded rather than allowed to fail the whole match.
  */
-const INTERNAL_LINK_PATTERN = /^\/(essays|notes)\/([^/#?]+)\/?(?:[#?].*)?$/;
+const INTERNAL_LINK_PATTERN = new RegExp(
+  `^/(${LINKED_COLLECTIONS.join("|")})/([^/#?]+)/?(?:[#?].*)?$`,
+);
 
 interface MarkdownLinkNode extends Node {
   url: string;
@@ -201,19 +212,29 @@ export function extractInternalLinkTargets(
 
 /**
  * Map from an entry's reference key to every entry whose body references it,
- * by wikilink (always a note target) or by internal markdown link (any
- * collection). Self-references are dropped; a source appears once per target
- * no matter how many times it links.
+ * by wikilink (resolved across collections) or by internal markdown link.
+ * Self-references are dropped; a source appears once per target no matter
+ * how many times it links.
+ *
+ * Both sides of the self-link comparison are slugified: a wikilink target
+ * always is, but an entry id is only slug-shaped by convention — Astro's
+ * glob loader hands back a frontmatter `slug` verbatim — and comparing the
+ * two raw would let an entry list itself as a backlink to itself.
  */
 export function buildReferenceIndex(
   entries: LinkedEntry[],
 ): Map<string, Backlink[]> {
+  const existingKeys = new Set(
+    entries.map((entry) =>
+      referenceKey(entry.collection, slugifyWikiTarget(entry.id)),
+    ),
+  );
   const index = new Map<string, Backlink[]>();
   for (const entry of entries) {
     const selfKey = referenceKey(entry.collection, slugifyWikiTarget(entry.id));
     const targets = new Set([
-      ...extractWikiTargets(entry.body, entry.format).map((id) =>
-        referenceKey("notes", id),
+      ...extractWikiTargets(entry.body, entry.format).map((target) =>
+        resolveWikiTarget(target, existingKeys),
       ),
       ...extractInternalLinkTargets(entry.body, entry.format),
     ]);

@@ -15,7 +15,7 @@
     "format:check": "prettier --check .",
     "check": "astro check",
     "test": "vitest run",
-    "test:e2e": "pnpm run build && playwright test"
+    "test:e2e": "CONTENT_DIR=./e2e/fixtures/content pnpm run build && playwright test"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.2",

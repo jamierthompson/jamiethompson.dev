@@ -1,0 +1,37 @@
+---
+import type { GetStaticPaths } from "astro";
+import { getCollection, render } from "astro:content";
+import Base from "../../layouts/Base.astro";
+import Backlinks from "../../components/Backlinks.astro";
+import { formatDate } from "../../lib/formatDate";
+import { getBacklinks } from "../../lib/references";
+
+export const getStaticPaths = (async () => {
+  const projects = await getCollection("projects", ({ data }) => !data.draft);
+  return projects.map((project) => ({
+    params: { slug: project.id },
+    props: { project },
+  }));
+}) satisfies GetStaticPaths;
+
+const { project } = Astro.props;
+const { Content } = await render(project);
+const backlinks = await getBacklinks("projects", project.id);
+---
+
+<Base
+  title={`${project.data.title} — Jamie Thompson`}
+  description={project.data.description}
+>
+  <article>
+    <h1>{project.data.title}</h1>
+    <p class="muted">
+      <time datetime={project.data.pubDate.toISOString()}>
+        {formatDate(project.data.pubDate)}
+      </time>
+    </p>
+    <Content />
+  </article>
+
+  <Backlinks backlinks={backlinks} />
+</Base>

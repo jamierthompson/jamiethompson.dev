@@ -9,6 +9,9 @@ const notes = (await getCollection("notes", ({ data }) => !data.draft)).sort(
 const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
   (a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf(),
 );
+const projects = (
+  await getCollection("projects", ({ data }) => !data.draft)
+).sort((a, b) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf());
 ---
 
 <Base
@@ -23,25 +26,20 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
     usually out of notes that piled up first.
   </p>
   <p>
-    Start with{" "}
-    <a href="/essays/directing-agents/">
-      Directing AI agents: how I ship production code I didn't write
-    </a>{" "}
-    — the system of governance and measurement that makes it work. Its working
-    rules are public at{" "}
+    The working rules I give AI agents are public at{" "}
     <ExternalLink href="https://github.com/jamierthompson/agent-conventions">
       agent-conventions
     </ExternalLink>
-    . That system is the first body of work here, not the last.
+    .
   </p>
 
-  {notes.length > 0 && (
+  {projects.length > 0 && (
     <section>
-      <h2>Notes</h2>
+      <h2>Projects</h2>
       <ul>
-        {notes.slice(0, 5).map((note) => (
+        {projects.slice(0, 5).map((project) => (
           <li>
-            <a href={`/notes/${note.id}/`}>{note.data.title}</a>
+            <a href={`/projects/${project.id}/`}>{project.data.title}</a>
           </li>
         ))}
       </ul>
@@ -55,6 +53,19 @@ const essays = (await getCollection("essays", ({ data }) => !data.draft)).sort(
         {essays.slice(0, 5).map((essay) => (
           <li>
             <a href={`/essays/${essay.id}/`}>{essay.data.title}</a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  {notes.length > 0 && (
+    <section>
+      <h2>Notes</h2>
+      <ul>
+        {notes.slice(0, 5).map((note) => (
+          <li>
+            <a href={`/notes/${note.id}/`}>{note.data.title}</a>
           </li>
         ))}
       </ul>

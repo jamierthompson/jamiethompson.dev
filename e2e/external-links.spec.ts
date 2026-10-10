@@ -13,8 +13,8 @@ const routes = readdirSync("dist", { recursive: true })
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
 
 /** A markdown-authored link, the surface the rehype plugin owns. */
-const MARKDOWN_LINK_ROUTE = "/essays/the-qa-rule/";
-const MARKDOWN_LINK_NAME = "PR #325";
+const MARKDOWN_LINK_ROUTE = "/essays/fixture-essay/";
+const MARKDOWN_LINK_NAME = "an external reference";
 /** The `.astro` surface, rendered by the component on the index page. */
 const COMPONENT_LINK_NAME = "agent-conventions";
 
@@ -91,14 +91,14 @@ test.describe("the contract, across every built page", () => {
   }) => {
     // The test above uses `isExternalHref` as its own oracle, so a rule that
     // regressed to always returning false would pass it with nothing checked.
-    // The floor is deliberately far below the real count: it catches a plugin
-    // that stopped marking, not a week's worth of ordinary link edits.
+    // The fixture content carries one markdown-authored external link and the
+    // home page one component-rendered link, so both surfaces must be marked.
     let marked = 0;
     for (const route of routes) {
       await page.goto(route);
       marked += await page.locator("a[data-external]").count();
     }
-    expect(marked).toBeGreaterThan(10);
+    expect(marked).toBeGreaterThanOrEqual(2);
   });
 
   test("every marked link has an accessible name", async ({ page }) => {

@@ -14,9 +14,8 @@ const routes = readdirSync("dist", { recursive: true })
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
 
 /** A route with a path segment, where a relative canonical would show up. */
-const NESTED_ROUTE = "/essays/agent-team-skill-eval/";
-const NESTED_TITLE =
-  "I evaluated my own AI agent orchestration tool and it lost twice";
+const NESTED_ROUTE = "/essays/fixture-essay/";
+const NESTED_TITLE = "A fixture essay";
 /** The suffix every page but the index appends to its `<title>`. */
 const TITLE_SUFFIX = " — Jamie Thompson";
 

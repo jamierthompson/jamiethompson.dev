@@ -54,19 +54,3 @@ test("every root-relative link resolves to a page the build emitted", () => {
 
   expect(dangling).toEqual([]);
 });
-
-test("no wikilink renders as a link to an entry that does not exist", () => {
-  // remark-wiki-link appends `new` to the class of a target missing from
-  // `permalinks`, so an unwritten entry is visible in the markup rather than
-  // only as a 404 someone has to click to find.
-  const unresolved: string[] = [];
-  for (const page of pages) {
-    const route = `/${page.slice(0, -"index.html".length)}`;
-    const html = readFileSync(join(DIST, page), "utf8");
-    for (const match of html.matchAll(/<a\b[^>]*\bclass="([^"]*)"[^>]*>/g)) {
-      if (/\bnew\b/.test(match[1])) unresolved.push(`${route}: ${match[0]}`);
-    }
-  }
-
-  expect(unresolved).toEqual([]);
-});

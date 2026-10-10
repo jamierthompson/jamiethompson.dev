@@ -13,8 +13,6 @@ Wikilinks connect entries across both collections by slug:
 
 - [[on-writing-in-public|On writing in public]] resolves to another post.
 - [[this-site]] resolves to the project, with the slug as the link text.
-- [[an-unwritten-idea|An unwritten idea]] points at nothing yet, so it renders
-  as a "new" link — a marker for something worth writing later.
 
 Plain markdown links work too: [the home page](/), or an external one like
 [Astro's docs](https://docs.astro.build/).

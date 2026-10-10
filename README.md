@@ -9,8 +9,8 @@ Built with [Astro](https://astro.build).
 - **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
   Writing adds a required `category`; projects take an optional `url` to the shipped project
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
-  build-time backlink index. Slugs are unique across collections (the build fails on a
-  collision); a link to an unwritten slug lands in `/writing/` and renders with the `new` class
+  build-time backlink index. The build fails on a slug claimed by two collections, and on
+  a link to a slug no collection holds
 - **Tailwind CSS v4** via `@tailwindcss/vite`, with `@tailwindcss/typography` for prose
 - **Geist / Geist Mono**, self-hosted at build time by Astro's Fonts API
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)

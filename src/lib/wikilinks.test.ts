@@ -358,13 +358,21 @@ describe("buildReferenceIndex", () => {
     body: string,
   ): LinkedEntry => ({ collection, id, title: `title:${id}`, body });
 
-  it("indexes a wikilink to an unwritten entry under the writing namespace", () => {
-    const index = buildReferenceIndex([
-      entry("projects", "an-essay", "cites [[a-note]]"),
-    ]);
-    expect(index.get(referenceKey("writing", "a-note"))).toEqual([
-      { collection: "projects", id: "an-essay", title: "title:an-essay" },
-    ]);
+  it("refuses a wikilink no entry resolves, naming the source and target", () => {
+    expect(() =>
+      buildReferenceIndex([
+        entry("projects", "an-essay", "cites [[a-note]] and [[Another]]"),
+        entry("writing", "b-note", "cites [[a-note]]"),
+      ]),
+    ).toThrow(
+      "A wikilink must name a published entry: projects/an-essay links to [[a-note]]; projects/an-essay links to [[another]]; writing/b-note links to [[a-note]].",
+    );
+  });
+
+  it("does not refuse a wikilink inside code, which never renders as a link", () => {
+    expect(() =>
+      buildReferenceIndex([entry("writing", "a", "`[[nowhere]]`")]),
+    ).not.toThrow();
   });
 
   it("indexes a wikilink under whichever collection holds the target", () => {
@@ -419,6 +427,7 @@ describe("buildReferenceIndex", () => {
         "self",
         "[[self]] and [me](/writing/self/), plus [[other]] and [other again](/writing/other/)",
       ),
+      entry("writing", "other", "prose"),
     ]);
     expect(index.get(referenceKey("writing", "self"))).toBeUndefined();
     expect(index.get(referenceKey("writing", "other"))).toEqual([
@@ -484,8 +493,8 @@ describe("resolveWikiTarget", () => {
     expect(resolveWikiTarget("on-color", keys)).toBe("projects/on-color");
   });
 
-  it("falls back to the writing namespace for an unwritten target", () => {
-    expect(resolveWikiTarget("unwritten", new Set())).toBe("writing/unwritten");
+  it("has no answer for a target no collection holds", () => {
+    expect(resolveWikiTarget("unwritten", new Set())).toBeUndefined();
   });
 });
 
@@ -504,21 +513,16 @@ describe("findSlugCollisions", () => {
 });
 
 describe("rendered output through the real remark pipeline", () => {
-  it("renders [[target]] to an unwritten entry as a new link into /writing/", async () => {
-    const html = await render("See [[The QA Rule]].");
-    expect(html).toContain('href="/writing/the-qa-rule/"');
-    expect(html).toContain('class="internal new"');
-    expect(html).toContain(">The QA Rule</a>");
-  });
-
   it("renders [[target]] into the collection that holds it", async () => {
     const html = await render("See [[oklch]].", ["projects/oklch"]);
     expect(html).toContain('href="/projects/oklch/"');
-    expect(html).not.toContain(" new");
+    expect(html).toContain('class="internal"');
   });
 
   it("renders the alias as the link text", async () => {
-    const html = await render("See [[the-qa-rule|the rule]].");
+    const html = await render("See [[the-qa-rule|the rule]].", [
+      "writing/the-qa-rule",
+    ]);
     expect(html).toContain('href="/writing/the-qa-rule/"');
     expect(html).toContain(">the rule</a>");
   });

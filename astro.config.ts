@@ -17,8 +17,8 @@ import {
 } from "./src/lib/wikilinks";
 
 // Reference keys of entries that exist right now, so remark-wiki-link can
-// resolve `[[slug]]` to the collection that holds it and class links to
-// unwritten entries as `new` instead of classing every link that way.
+// resolve `[[slug]]` to the collection that holds it. (A slug no collection
+// holds fails the build in `buildReferenceIndex`.)
 const existingEntryKeys = LINKED_COLLECTIONS.flatMap((collection) => {
   const dir = `${CONTENT_DIR}/${collection}`;
   if (!existsSync(dir)) return [];

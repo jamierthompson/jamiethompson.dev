@@ -15,12 +15,10 @@ import type { Node } from "unist";
  * collections (see `findSlugCollisions`). Targets slugify with
  * github-slugger — the same slugger Astro's glob loader uses for entry ids —
  * so a wikilink can always reach the entry it names. A link to an entry that
- * doesn't exist yet is allowed by design: it falls back to the writing
- * namespace, renders with the `new` class (wired via `permalinks` in
- * astro.config.ts), and marks something worth writing later.
+ * doesn't exist fails the build: `buildReferenceIndex` refuses it, and every
+ * entry page builds that index.
  */
 
-/** In resolution order: the first is also where an unwritten target lands. */
 export const LINKED_COLLECTIONS = ["writing", "projects"] as const;
 
 export type LinkedCollection = (typeof LINKED_COLLECTIONS)[number];
@@ -42,14 +40,15 @@ export const wikiLinkOptions = {
 /**
  * The reference key a wikilink target lands on, by the same rule
  * remark-wiki-link applies when it renders the link: the first candidate
- * that exists, else the first candidate.
+ * that exists, else `undefined`.
  */
 export function resolveWikiTarget(
   target: string,
   existingKeys: ReadonlySet<string>,
-): string {
-  const candidates = wikiLinkOptions.pageResolver(target);
-  return candidates.find((key) => existingKeys.has(key)) ?? candidates[0];
+): string | undefined {
+  return wikiLinkOptions
+    .pageResolver(target)
+    .find((key) => existingKeys.has(key));
 }
 
 /**
@@ -216,6 +215,15 @@ export function extractInternalLinkTargets(
  * Self-references are dropped; a source appears once per target no matter
  * how many times it links.
  *
+ * A wikilink that no entry resolves throws, naming the source and target.
+ * This is the build's only gate for it: remark-wiki-link still renders such a
+ * link (pointing at a page that is never emitted), and a remark plugin cannot
+ * refuse it either, because Astro's glob loader catches a render error, logs
+ * it and stores the entry with an empty body (`content/loaders/glob.js`).
+ * Every entry page builds this index, so throwing here fails the build.
+ * The index is built from published entries, so a link to a draft is refused
+ * too — it would be a 404 all the same.
+ *
  * Both sides of the self-link comparison are slugified: a wikilink target
  * always is, but an entry id is only slug-shaped by convention — Astro's
  * glob loader hands back a frontmatter `slug` verbatim — and comparing the
@@ -230,12 +238,18 @@ export function buildReferenceIndex(
     ),
   );
   const index = new Map<string, Backlink[]>();
+  const unresolved: string[] = [];
   for (const entry of entries) {
     const selfKey = referenceKey(entry.collection, slugifyWikiTarget(entry.id));
     const targets = new Set([
-      ...extractWikiTargets(entry.body, entry.format).map((target) =>
-        resolveWikiTarget(target, existingKeys),
-      ),
+      ...extractWikiTargets(entry.body, entry.format).flatMap((target) => {
+        const key = resolveWikiTarget(target, existingKeys);
+        if (key === undefined) {
+          unresolved.push(`${selfKey} links to [[${target}]]`);
+          return [];
+        }
+        return [key];
+      }),
       ...extractInternalLinkTargets(entry.body, entry.format),
     ]);
     for (const target of targets) {
@@ -248,6 +262,11 @@ export function buildReferenceIndex(
       });
       index.set(target, sources);
     }
+  }
+  if (unresolved.length > 0) {
+    throw new Error(
+      `A wikilink must name a published entry: ${unresolved.join("; ")}.`,
+    );
   }
   return index;
 }

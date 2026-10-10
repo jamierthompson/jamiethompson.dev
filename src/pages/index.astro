@@ -3,6 +3,7 @@ import { getCollection } from "astro:content";
 import ArrowRight from "@lucide/astro/icons/arrow-right";
 import Base from "../layouts/Base.astro";
 import ExternalLink from "../components/ExternalLink.astro";
+import { initial } from "../lib/initial";
 
 const byNewest = (
   a: { data: { pubDate: Date } },
@@ -79,7 +80,7 @@ const row =
                 aria-hidden="true"
                 class="grid size-10 shrink-0 place-items-center rounded-[10px] border bg-card font-mono text-sm text-muted-foreground shadow-xs transition-colors group-hover:text-foreground"
               >
-                {project.data.title.charAt(0)}
+                {initial(project.data.title)}
               </span>
               <span class="flex min-w-0 flex-col">
                 <span class="font-medium">{project.data.title}</span>

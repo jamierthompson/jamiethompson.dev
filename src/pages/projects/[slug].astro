@@ -5,6 +5,7 @@ import Base from "../../layouts/Base.astro";
 import BackLink from "../../components/BackLink.astro";
 import Backlinks from "../../components/Backlinks.astro";
 import ExternalLink from "../../components/ExternalLink.astro";
+import { initial } from "../../lib/initial";
 import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
@@ -32,7 +33,7 @@ const { url } = project.data;
         aria-hidden="true"
         class="grid size-12 shrink-0 place-items-center rounded-xl border bg-card font-mono text-muted-foreground shadow-xs"
       >
-        {project.data.title.charAt(0)}
+        {initial(project.data.title)}
       </span>
       <div class="min-w-0">
         <h1 class="font-medium">{project.data.title}</h1>

@@ -19,7 +19,7 @@ beforeAll(async () => {
  */
 function render(
   props: Record<string, unknown>,
-  path = "/notes/no-prior-context/",
+  path = "/writing/no-prior-context/",
 ): Promise<string> {
   return container.renderToString(Base, {
     props,
@@ -77,7 +77,7 @@ describe("Base", () => {
       const html = await render({ title: "A note — Jamie Thompson" });
       const canonical = html.match(/<link rel="canonical" href="([^"]*)"/)?.[1];
 
-      expect(canonical).toBe(`${SITE_URL}/notes/no-prior-context/`);
+      expect(canonical).toBe(`${SITE_URL}/writing/no-prior-context/`);
       expect(canonical).not.toContain("localhost");
       expect(contentOf(html, "og:url")).toBe(canonical);
     });
@@ -98,9 +98,9 @@ describe("Base", () => {
       const origin = new URL(SITE_URL).origin;
       for (const path of [
         "//evil.example.com/x/",
-        "/notes/x/../../../y/",
-        "/notes/x/?utm_source=q#frag",
-        "/notes/%2e%2e/",
+        "/writing/x/../../../y/",
+        "/writing/x/?utm_source=q#frag",
+        "/writing/%2e%2e/",
       ]) {
         const html = await render({ title: "A note — Jamie Thompson" }, path);
         const canonical =

@@ -95,7 +95,7 @@ describe("ExternalLink", () => {
   describe("hrefs it refuses", () => {
     it("refuses an internal href with a message naming the component", async () => {
       for (const href of [
-        "/notes/x/",
+        "/writing/x/",
         "#heading",
         "https://jamiethompson.design/x/",
         "",

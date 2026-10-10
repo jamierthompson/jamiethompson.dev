@@ -11,14 +11,10 @@ const entrySchema = z.object({
   draft: z.boolean().default(false),
 });
 
-const essays = defineCollection({
-  loader: glob({ pattern: "*.{md,mdx}", base: `${CONTENT_DIR}/essays` }),
-  schema: entrySchema,
-});
-
-const notes = defineCollection({
-  loader: glob({ pattern: "*.{md,mdx}", base: `${CONTENT_DIR}/notes` }),
-  schema: entrySchema,
+/** Every post, long or short; `category` is the label under its title. */
+const writing = defineCollection({
+  loader: glob({ pattern: "*.{md,mdx}", base: `${CONTENT_DIR}/writing` }),
+  schema: entrySchema.extend({ category: z.string() }),
 });
 
 const projects = defineCollection({
@@ -26,4 +22,4 @@ const projects = defineCollection({
   schema: entrySchema,
 });
 
-export const collections = { essays, notes, projects };
+export const collections = { writing, projects };

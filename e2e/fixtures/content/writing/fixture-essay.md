@@ -2,6 +2,7 @@
 title: "A fixture essay"
 description: "An essay the E2E suite builds against."
 pubDate: 2026-01-02
+category: "Fixtures"
 ---
 
 This essay carries a markdown-authored external link, [an external reference][ref],

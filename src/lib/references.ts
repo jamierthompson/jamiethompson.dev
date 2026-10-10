@@ -16,8 +16,7 @@ let indexPromise: Promise<Map<string, Backlink[]>> | undefined;
 
 async function buildIndex(): Promise<Map<string, Backlink[]>> {
   const published = [
-    ...(await getCollection("essays", ({ data }) => !data.draft)),
-    ...(await getCollection("notes", ({ data }) => !data.draft)),
+    ...(await getCollection("writing", ({ data }) => !data.draft)),
     ...(await getCollection("projects", ({ data }) => !data.draft)),
   ];
   const entries: LinkedEntry[] = published.map((entry) => ({

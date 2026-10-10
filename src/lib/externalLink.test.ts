@@ -110,12 +110,12 @@ describe("isExternalHref", () => {
 
   it("takes the site's scheme for a protocol-relative URL", () => {
     expect(isExternalHref("//example.com/x")).toBe(true);
-    expect(isExternalHref("//jamiethompson.design/essays/")).toBe(false);
+    expect(isExternalHref("//jamiethompson.design/projects/")).toBe(false);
     expect(isExternalHref("//JAMIETHOMPSON.DESIGN/x")).toBe(false);
   });
 
   it("compares origins, not prefixes", () => {
-    expect(isExternalHref("https://jamiethompson.design/essays/x/")).toBe(
+    expect(isExternalHref("https://jamiethompson.design/projects/x/")).toBe(
       false,
     );
     expect(isExternalHref("https://jamiethompson.design.example.com")).toBe(
@@ -144,7 +144,7 @@ describe("isExternalHref", () => {
   });
 
   it("leaves same-document hrefs alone", () => {
-    expect(isExternalHref("/notes/no-prior-context/")).toBe(false);
+    expect(isExternalHref("/writing/no-prior-context/")).toBe(false);
     expect(isExternalHref("#the-qa-rule")).toBe(false);
     expect(isExternalHref("")).toBe(false);
   });
@@ -220,8 +220,8 @@ describe("isExternalHref resolves an href the way a browser resolves the attribu
     const bases = [
       SITE_URL,
       `${SITE_URL}/`,
-      `${SITE_URL}/essays/a/b/`,
-      `${SITE_URL}/essays/a/b/c.html?q=1#f`,
+      `${SITE_URL}/projects/a/b/`,
+      `${SITE_URL}/projects/a/b/c.html?q=1#f`,
     ];
     for (const href of [
       "..",
@@ -279,7 +279,7 @@ describe("isExternalHref on hosts near the site's own origin", () => {
 describe("isExternalHref never calls a leaving link internal", () => {
   it("agrees with the platform parser across a seeded fuzz", () => {
     // A page deep in the site, to prove the base's *path* cannot matter.
-    const page = "https://jamiethompson.design/essays/deep/page/";
+    const page = "https://jamiethompson.design/projects/deep/page/";
     const alphabet = [
       ..."htps:/\\.@?#%2eavilcomjd-",
       " ",
@@ -362,7 +362,7 @@ describe("rehypeMarkExternalLinks applies isExternalHref and nothing else", () =
     [`https://example.com/x`, true],
     [`mailto:me@example.com`, true],
     [`//example.com/x`, true],
-    [`/notes/x/`, false],
+    [`/writing/x/`, false],
     [`#frag`, false],
     [`https://jamiethompson.design/x`, false],
     [`tel:+15550000000`, false],
@@ -421,7 +421,7 @@ describe("rehypeMarkExternalLinks on hast the markdown pipeline never emits", ()
   it("holds no state between trees", () => {
     const transform = rehypeMarkExternalLinks();
     const external = anchorTree("https://example.com/x");
-    const internal = anchorTree("/notes/x/");
+    const internal = anchorTree("/writing/x/");
     transform(external);
     transform(internal);
     expect(isMarked(firstAnchor(external))).toBe(true);
@@ -468,11 +468,11 @@ describe("the markdown surface marks what the rule calls leaving", () => {
   });
 
   it.each([
-    "/notes/no-prior-context/",
+    "/writing/no-prior-context/",
     "#a-heading",
     "?q=1",
-    "https://jamiethompson.design/essays/",
-    "//jamiethompson.design/essays/",
+    "https://jamiethompson.design/projects/",
+    "//jamiethompson.design/projects/",
     "https://user@jamiethompson.design/x",
     "tel:+15550000000",
   ])("leaves %s completely untouched", async (href) => {
@@ -514,7 +514,7 @@ describe("the markdown surface marks what the rule calls leaving", () => {
 
   it("does not mark a wikilink to a note", async () => {
     const anchor = await renderAnchor("[[no-prior-context]]");
-    expect(anchor.href).toBe("/notes/no-prior-context/");
+    expect(anchor.href).toBe("/writing/no-prior-context/");
     expect(anchor.marked).toBe(false);
   });
 
@@ -551,7 +551,7 @@ describe("the markdown surface emits the href as authored", () => {
       expect(anchor.href).toBe(href);
     }
     const wikilink = await renderAnchor("[[no-prior-context]]");
-    expect(wikilink.href).toBe("/notes/no-prior-context/");
+    expect(wikilink.href).toBe("/writing/no-prior-context/");
   });
 
   it("keeps a markdown link title and still marks the link", async () => {
@@ -620,9 +620,9 @@ describe("raw HTML anchors ship as authored and unmarked", () => {
   });
 
   it("are left alone when internal, which needs no treatment", async () => {
-    const anchor = await renderAnchor('<a href="/notes/x/">raw</a>');
+    const anchor = await renderAnchor('<a href="/writing/x/">raw</a>');
     expect(anchor.marked).toBe(false);
-    expect(anchor.href).toBe("/notes/x/");
+    expect(anchor.href).toBe("/writing/x/");
   });
 
   // Shiki escapes fenced content to `&#x3C;a …`, so an anchor written about

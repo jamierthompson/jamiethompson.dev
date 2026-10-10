@@ -15,13 +15,13 @@ import type { Node } from "unist";
  * collections (see `findSlugCollisions`). Targets slugify with
  * github-slugger — the same slugger Astro's glob loader uses for entry ids —
  * so a wikilink can always reach the entry it names. A link to an entry that
- * doesn't exist yet is allowed by design: it falls back to the notes
+ * doesn't exist yet is allowed by design: it falls back to the writing
  * namespace, renders with the `new` class (wired via `permalinks` in
  * astro.config.ts), and marks something worth writing later.
  */
 
 /** In resolution order: the first is also where an unwritten target lands. */
-export const LINKED_COLLECTIONS = ["notes", "essays", "projects"] as const;
+export const LINKED_COLLECTIONS = ["writing", "projects"] as const;
 
 export type LinkedCollection = (typeof LINKED_COLLECTIONS)[number];
 
@@ -188,11 +188,11 @@ interface MarkdownLinkNode extends Node {
 /**
  * Internal `[text](/collection/id/)` targets, as reference keys.
  *
- * A fragment or query is stripped, so `/notes/a-note/#the-part` references
- * `notes/a-note` — the page renders one cross-reference either way. What
+ * A fragment or query is stripped, so `/writing/a-note/#the-part` references
+ * `writing/a-note` — the page renders one cross-reference either way. What
  * never matches is a link that names no single entry: an index page
- * (`/notes/`), a path outside the linked collections, a deeper path
- * (`/notes/a/b/`), and any external URL.
+ * (`/writing/`), a path outside the linked collections, a deeper path
+ * (`/writing/a/b/`), and any external URL.
  */
 export function extractInternalLinkTargets(
   body: string,

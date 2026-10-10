@@ -48,19 +48,19 @@ describe("slugification is lossy in ways both sides share", () => {
   it("collapses [[C++]] and [[C]] onto one target", async () => {
     const md = "[[C++]] and [[C]]";
     const html = await render(md);
-    expect(html.match(/href="\/notes\/c\/"/g)).toHaveLength(2);
+    expect(html.match(/href="\/writing\/c\/"/g)).toHaveLength(2);
     expect(extractWikiTargets(md)).toEqual(["c"]);
   });
 
   it("keeps non-ASCII letters in the slug", async () => {
     expect(extractWikiTargets("[[Café]]")).toEqual(["café"]);
-    expect(await render("[[Café]]")).toContain('href="/notes/café/"');
+    expect(await render("[[Café]]")).toContain('href="/writing/café/"');
   });
 
   it("swallows a # fragment into the target rather than splitting on it", async () => {
     const md = "[[target#a-heading]]";
     expect(extractWikiTargets(md)).toEqual(["targeta-heading"]);
-    expect(await render(md)).toContain('href="/notes/targeta-heading/"');
+    expect(await render(md)).toContain('href="/writing/targeta-heading/"');
   });
 });
 
@@ -72,8 +72,8 @@ describe("slugification is lossy in ways both sides share", () => {
  */
 describe("entryFormatFromPath", () => {
   it("reads the two extensions the loaders glob", () => {
-    expect(entryFormatFromPath("src/content/notes/a-note.md")).toBe("md");
-    expect(entryFormatFromPath("src/content/notes/a-note.mdx")).toBe("mdx");
+    expect(entryFormatFromPath("src/content/writing/a-note.md")).toBe("md");
+    expect(entryFormatFromPath("src/content/writing/a-note.mdx")).toBe("mdx");
   });
 
   it("has no opinion when the loader stored no path", () => {
@@ -81,17 +81,17 @@ describe("entryFormatFromPath", () => {
   });
 
   it("treats .MDX as markdown, the way Astro's exact extension map does", () => {
-    expect(entryFormatFromPath("src/content/notes/a-note.MDX")).toBe("md");
+    expect(entryFormatFromPath("src/content/writing/a-note.MDX")).toBe("md");
   });
 
   it("does not read .mdx in a directory name as the extension", () => {
-    expect(entryFormatFromPath("src/content/notes/about.mdx/index.md")).toBe(
+    expect(entryFormatFromPath("src/content/writing/about.mdx/index.md")).toBe(
       "md",
     );
   });
 
   it("falls back to markdown for a path with no extension", () => {
-    expect(entryFormatFromPath("src/content/notes/README")).toBe("md");
+    expect(entryFormatFromPath("src/content/writing/README")).toBe("md");
   });
 });
 
@@ -181,7 +181,7 @@ describe("extractWikiTargets ignores what the parser refuses to render", () => {
 describe("extractWikiTargets and the parser agree at the edges", () => {
   it("keeps the first divider as the target/alias split for [[a|b|c]]", async () => {
     const html = await render("See [[a|b|c]].");
-    expect(html).toContain('href="/notes/a/"');
+    expect(html).toContain('href="/writing/a/"');
     expect(html).toContain(">b|c</a>");
     expect(extractWikiTargets("See [[a|b|c]].")).toEqual(["a"]);
   });
@@ -199,7 +199,7 @@ describe("extractWikiTargets and the parser agree at the edges", () => {
   it("collapses runs of whitespace to a single dash", async () => {
     expect(extractWikiTargets("[[the   qa   rule]]")).toEqual(["the-qa-rule"]);
     expect(await render("[[the   qa   rule]]")).toContain(
-      'href="/notes/the-qa-rule/"',
+      'href="/writing/the-qa-rule/"',
     );
   });
 });
@@ -214,7 +214,7 @@ describe("wikilinks nested inside other markdown still count", () => {
   ];
 
   it.each(nested)("renders and counts one inside %s", async (_label, md) => {
-    expect(await render(md)).toContain('href="/notes/a/"');
+    expect(await render(md)).toContain('href="/writing/a/"');
     expect(extractWikiTargets(md)).toEqual(["a"]);
   });
 });
@@ -236,15 +236,20 @@ describe("MDX bodies go through the same extractor as markdown", () => {
 
   it("does not give a real note a phantom row from a JSX prop", () => {
     const index = buildReferenceIndex([
-      { collection: "notes", id: "the-qa-rule", title: "Rule", body: "prose" },
       {
-        collection: "essays",
+        collection: "writing",
+        id: "the-qa-rule",
+        title: "Rule",
+        body: "prose",
+      },
+      {
+        collection: "projects",
         id: "chart",
         title: "Chart",
         body: '<Chart labels={[[ "The QA Rule" ]]} />',
       },
     ]);
-    expect(index.get(referenceKey("notes", "the-qa-rule"))).toBeUndefined();
+    expect(index.get(referenceKey("writing", "the-qa-rule"))).toBeUndefined();
   });
 });
 
@@ -271,8 +276,8 @@ describe("a declared format parses by that grammar", () => {
 
   it("counts an internal link written in mdx", () => {
     expect(
-      extractInternalLinkTargets("read [it](/essays/the-qa-rule/)", "mdx"),
-    ).toEqual(["essays/the-qa-rule"]);
+      extractInternalLinkTargets("read [it](/projects/the-qa-rule/)", "mdx"),
+    ).toEqual(["projects/the-qa-rule"]);
   });
 
   it("reads an indented block as code in md and as a paragraph in mdx", () => {
@@ -287,18 +292,18 @@ describe("a declared format parses by that grammar", () => {
 describe("extractInternalLinkTargets", () => {
   it("finds links into every collection, with or without trailing slash", () => {
     const md =
-      "Read [the essay](/essays/the-qa-rule/) and " +
-      "[a note](/notes/no-prior-context).";
+      "Read [the essay](/projects/the-qa-rule/) and " +
+      "[a note](/writing/no-prior-context).";
     expect(extractInternalLinkTargets(md)).toEqual([
-      "essays/the-qa-rule",
-      "notes/no-prior-context",
+      "projects/the-qa-rule",
+      "writing/no-prior-context",
     ]);
   });
 
   it("ignores external URLs, a collection index, and the home page", () => {
     const md =
       "See [GitHub](https://github.com/jamierthompson/digital-garden), " +
-      "[all notes](/notes/), and [home](/).";
+      "[all writing](/writing/), and [home](/).";
     expect(extractInternalLinkTargets(md)).toEqual([]);
   });
 
@@ -313,14 +318,14 @@ describe("extractInternalLinkTargets", () => {
 
   it("ignores links inside code fences and inline code", () => {
     const md =
-      "```md\n[fenced](/essays/fenced/)\n```\n" +
-      "and `[inline](/notes/inline/)` stay text.";
+      "```md\n[fenced](/projects/fenced/)\n```\n" +
+      "and `[inline](/writing/inline/)` stay text.";
     expect(extractInternalLinkTargets(md)).toEqual([]);
   });
 
   it("de-duplicates repeated internal-link targets", () => {
-    const md = "[once](/essays/a/) and [twice](/essays/a/)";
-    expect(extractInternalLinkTargets(md)).toEqual(["essays/a"]);
+    const md = "[once](/projects/a/) and [twice](/projects/a/)";
+    expect(extractInternalLinkTargets(md)).toEqual(["projects/a"]);
   });
 
   /**
@@ -329,20 +334,20 @@ describe("extractInternalLinkTargets", () => {
    */
   it("counts a link to a heading inside a note", () => {
     expect(
-      extractInternalLinkTargets("[the part](/notes/a-note/#the-part)"),
-    ).toEqual(["notes/a-note"]);
+      extractInternalLinkTargets("[the part](/writing/a-note/#the-part)"),
+    ).toEqual(["writing/a-note"]);
   });
 
   it("counts a link to a heading with no trailing slash", () => {
     expect(
-      extractInternalLinkTargets("[the part](/essays/an-essay#the-part)"),
-    ).toEqual(["essays/an-essay"]);
+      extractInternalLinkTargets("[the part](/projects/an-essay#the-part)"),
+    ).toEqual(["projects/an-essay"]);
   });
 
   it("counts a link carrying a query string", () => {
     expect(
-      extractInternalLinkTargets("[the run](/essays/the-eval/?tab=data)"),
-    ).toEqual(["essays/the-eval"]);
+      extractInternalLinkTargets("[the run](/projects/the-eval/?tab=data)"),
+    ).toEqual(["projects/the-eval"]);
   });
 });
 
@@ -353,94 +358,94 @@ describe("buildReferenceIndex", () => {
     body: string,
   ): LinkedEntry => ({ collection, id, title: `title:${id}`, body });
 
-  it("indexes a wikilink to an unwritten entry under the notes namespace", () => {
+  it("indexes a wikilink to an unwritten entry under the writing namespace", () => {
     const index = buildReferenceIndex([
-      entry("essays", "an-essay", "cites [[a-note]]"),
+      entry("projects", "an-essay", "cites [[a-note]]"),
     ]);
-    expect(index.get(referenceKey("notes", "a-note"))).toEqual([
-      { collection: "essays", id: "an-essay", title: "title:an-essay" },
+    expect(index.get(referenceKey("writing", "a-note"))).toEqual([
+      { collection: "projects", id: "an-essay", title: "title:an-essay" },
     ]);
   });
 
   it("indexes a wikilink under whichever collection holds the target", () => {
     const index = buildReferenceIndex([
       entry(
-        "notes",
+        "writing",
         "a-note",
         "built in [[the-project]], argued in [[the-essay]]",
       ),
       entry("projects", "the-project", "prose"),
-      entry("essays", "the-essay", "prose"),
+      entry("projects", "the-essay", "prose"),
     ]);
     expect(index.get(referenceKey("projects", "the-project"))).toEqual([
-      { collection: "notes", id: "a-note", title: "title:a-note" },
+      { collection: "writing", id: "a-note", title: "title:a-note" },
     ]);
-    expect(index.get(referenceKey("essays", "the-essay"))).toEqual([
-      { collection: "notes", id: "a-note", title: "title:a-note" },
+    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
+      { collection: "writing", id: "a-note", title: "title:a-note" },
     ]);
-    expect(index.get(referenceKey("notes", "the-project"))).toBeUndefined();
+    expect(index.get(referenceKey("writing", "the-project"))).toBeUndefined();
   });
 
   it("indexes internal-link references to projects", () => {
     const index = buildReferenceIndex([
       entry(
-        "essays",
+        "projects",
         "an-essay",
         "shipped as [the project](/projects/the-project/)",
       ),
     ]);
     expect(index.get(referenceKey("projects", "the-project"))).toEqual([
-      { collection: "essays", id: "an-essay", title: "title:an-essay" },
+      { collection: "projects", id: "an-essay", title: "title:an-essay" },
     ]);
   });
 
-  it("indexes internal-link references to notes and essays alike", () => {
+  it("indexes internal-link references to writing and projects alike", () => {
     const index = buildReferenceIndex([
-      entry("notes", "a-note", "stated in [the note](/notes/the-note/)"),
-      entry("notes", "b-note", "argued in [the essay](/essays/the-essay/)"),
+      entry("writing", "a-note", "stated in [the note](/writing/the-note/)"),
+      entry("writing", "b-note", "argued in [the essay](/projects/the-essay/)"),
     ]);
-    expect(index.get(referenceKey("notes", "the-note"))).toEqual([
-      { collection: "notes", id: "a-note", title: "title:a-note" },
+    expect(index.get(referenceKey("writing", "the-note"))).toEqual([
+      { collection: "writing", id: "a-note", title: "title:a-note" },
     ]);
-    expect(index.get(referenceKey("essays", "the-essay"))).toEqual([
-      { collection: "notes", id: "b-note", title: "title:b-note" },
+    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
+      { collection: "writing", id: "b-note", title: "title:b-note" },
     ]);
   });
 
   it("drops self-references and collapses repeat links from one source", () => {
     const index = buildReferenceIndex([
       entry(
-        "notes",
+        "writing",
         "self",
-        "[[self]] and [me](/notes/self/), plus [[other]] and [other again](/notes/other/)",
+        "[[self]] and [me](/writing/self/), plus [[other]] and [other again](/writing/other/)",
       ),
     ]);
-    expect(index.get(referenceKey("notes", "self"))).toBeUndefined();
-    expect(index.get(referenceKey("notes", "other"))).toEqual([
-      { collection: "notes", id: "self", title: "title:self" },
+    expect(index.get(referenceKey("writing", "self"))).toBeUndefined();
+    expect(index.get(referenceKey("writing", "other"))).toEqual([
+      { collection: "writing", id: "self", title: "title:self" },
     ]);
   });
 
   it("does not conflate same ids across collections", () => {
     const index = buildReferenceIndex([
-      entry("notes", "a", "[link](/essays/shared/)"),
-      entry("notes", "b", "[link](/notes/shared/)"),
+      entry("writing", "a", "[link](/projects/shared/)"),
+      entry("writing", "b", "[link](/writing/shared/)"),
     ]);
-    expect(index.get(referenceKey("essays", "shared"))).toHaveLength(1);
-    expect(index.get(referenceKey("notes", "shared"))).toHaveLength(1);
+    expect(index.get(referenceKey("projects", "shared"))).toHaveLength(1);
+    expect(index.get(referenceKey("writing", "shared"))).toHaveLength(1);
   });
 
   it("gives the target a Referenced by row when the link is anchored", () => {
     const index = buildReferenceIndex([
       {
-        collection: "notes",
+        collection: "writing",
         id: "source",
         title: "Source",
-        body: "argued in [the essay](/essays/the-essay/#the-claim)",
+        body: "argued in [the essay](/projects/the-essay/#the-claim)",
       },
     ]);
-    expect(index.get(referenceKey("essays", "the-essay"))).toEqual([
-      { collection: "notes", id: "source", title: "Source" },
+    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
+      { collection: "writing", id: "source", title: "Source" },
     ]);
   });
 });
@@ -451,7 +456,7 @@ describe("self-reference exemption compares like with like", () => {
   // so comparing the two raw would let an entry escape the self-link
   // exemption.
   const unslugged: LinkedEntry = {
-    collection: "notes",
+    collection: "writing",
     id: "The-QA-Rule",
     title: "The QA Rule",
     body: "see [[The QA Rule]]",
@@ -466,7 +471,7 @@ describe("self-reference exemption compares like with like", () => {
   it("exempts an entry from itself in the reference index too", () => {
     expect(
       buildReferenceIndex([unslugged]).get(
-        referenceKey("notes", "the-qa-rule"),
+        referenceKey("writing", "the-qa-rule"),
       ),
     ).toBeUndefined();
   });
@@ -474,34 +479,34 @@ describe("self-reference exemption compares like with like", () => {
 
 describe("resolveWikiTarget", () => {
   it("lands on the collection that holds the target", () => {
-    const keys = new Set(["projects/oklch", "essays/on-color"]);
+    const keys = new Set(["projects/oklch", "projects/on-color"]);
     expect(resolveWikiTarget("oklch", keys)).toBe("projects/oklch");
-    expect(resolveWikiTarget("on-color", keys)).toBe("essays/on-color");
+    expect(resolveWikiTarget("on-color", keys)).toBe("projects/on-color");
   });
 
-  it("falls back to the notes namespace for an unwritten target", () => {
-    expect(resolveWikiTarget("unwritten", new Set())).toBe("notes/unwritten");
+  it("falls back to the writing namespace for an unwritten target", () => {
+    expect(resolveWikiTarget("unwritten", new Set())).toBe("writing/unwritten");
   });
 });
 
 describe("findSlugCollisions", () => {
   it("names a slug claimed by more than one collection", () => {
     expect(
-      findSlugCollisions(["notes/oklch", "projects/oklch", "essays/other"]),
-    ).toEqual(["oklch (notes, projects)"]);
+      findSlugCollisions(["writing/oklch", "projects/oklch", "projects/other"]),
+    ).toEqual(["oklch (writing, projects)"]);
   });
 
   it("finds nothing when every slug is unique", () => {
-    expect(findSlugCollisions(["notes/a", "essays/b", "projects/c"])).toEqual(
-      [],
-    );
+    expect(
+      findSlugCollisions(["writing/a", "projects/b", "projects/c"]),
+    ).toEqual([]);
   });
 });
 
 describe("rendered output through the real remark pipeline", () => {
-  it("renders [[target]] to an unwritten entry as a new link into /notes/", async () => {
+  it("renders [[target]] to an unwritten entry as a new link into /writing/", async () => {
     const html = await render("See [[The QA Rule]].");
-    expect(html).toContain('href="/notes/the-qa-rule/"');
+    expect(html).toContain('href="/writing/the-qa-rule/"');
     expect(html).toContain('class="internal new"');
     expect(html).toContain(">The QA Rule</a>");
   });
@@ -514,7 +519,7 @@ describe("rendered output through the real remark pipeline", () => {
 
   it("renders the alias as the link text", async () => {
     const html = await render("See [[the-qa-rule|the rule]].");
-    expect(html).toContain('href="/notes/the-qa-rule/"');
+    expect(html).toContain('href="/writing/the-qa-rule/"');
     expect(html).toContain(">the rule</a>");
   });
 });

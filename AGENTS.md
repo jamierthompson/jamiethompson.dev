@@ -1,12 +1,17 @@
 ## Development
 
-When starting the dev server, use background mode:
+Start the dev server through the Claude desktop app's browser pane (`preview_start`
+with the `dev` configuration from `.claude/launch.json`). The app owns the process, so
+the server stops when the session ends.
 
-```
-astro dev --background
-```
+Do not run `astro dev` or `pnpm dev` from a shell in an agent session: Astro detects the
+agent and forks the server into a detached background process that outlives the
+session. If one is already running, stop it with `pnpm exec astro dev stop`.
 
-Manage the background server with `astro dev stop`, `astro dev status`, and `astro dev logs`.
+In a terminal session with no browser pane, prefer a server the user starts themselves
+in their own terminal and use it at http://localhost:4321. If you must start one, run
+`pnpm dev --ignore-lock` as a background shell task so it stays attached to the session,
+and stop it before you finish.
 
 ## Documentation
 

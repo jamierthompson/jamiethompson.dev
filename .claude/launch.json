@@ -3,8 +3,8 @@
   "configurations": [
     {
       "name": "dev",
-      "runtimeExecutable": "env",
-      "runtimeArgs": ["ASTRO_DEV_BACKGROUND=1", "pnpm", "run", "dev"],
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["run", "dev", "--ignore-lock"],
       "port": 4321
     }
   ]

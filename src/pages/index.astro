@@ -1,37 +1,17 @@
 ---
-import { getCollection } from "astro:content";
-import ArrowRight from "@lucide/astro/icons/arrow-right";
 import Base from "../layouts/Base.astro";
 import ExternalLink from "../components/ExternalLink.astro";
-import { initial } from "../lib/initial";
+import ProjectCard from "../components/ProjectCard.astro";
+import EntryRow from "../components/EntryRow.astro";
+import { published } from "../lib/collections";
+import { SITE_NAME } from "../lib/site";
 
-const byNewest = (
-  a: { data: { pubDate: Date } },
-  b: { data: { pubDate: Date } },
-) => b.data.pubDate.valueOf() - a.data.pubDate.valueOf();
-
-const projects = (
-  await getCollection("projects", ({ data }) => !data.draft)
-).sort(byNewest);
-const writing = (
-  await getCollection("writing", ({ data }) => !data.draft)
-).sort(byNewest);
-
-/** Month and year is enough on a list; the post itself carries the day. */
-const monthYear = (date: Date) =>
-  date.toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-
-/** A row is a link that spans the column, with a quiet wash on hover. */
-const row =
-  "group -mx-3 flex items-center gap-4 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/70";
+const projects = await published("projects");
+const writing = await published("writing");
 ---
 
 <Base
-  title="Jamie Thompson"
+  title={SITE_NAME}
   description="Design engineer. Projects, and writing about the things I build."
 >
   <header class="enter flex items-center gap-3">
@@ -44,7 +24,7 @@ const row =
       JT
     </span>
     <div>
-      <h1 class="font-medium">Jamie Thompson</h1>
+      <h1 class="font-medium">{SITE_NAME}</h1>
       <p class="text-muted-foreground">Design engineer</p>
     </div>
   </header>
@@ -69,26 +49,13 @@ const row =
       style="--stagger: 2"
       aria-labelledby="projects"
     >
-      <h2 id="projects" class="mb-3 font-medium">
+      <h2 id="projects" class="mb-4 font-medium">
         Projects
       </h2>
-      <ul>
+      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {projects.map((project) => (
           <li>
-            <a href={`/projects/${project.id}/`} class={row}>
-              <span
-                aria-hidden="true"
-                class="grid size-10 shrink-0 place-items-center rounded-[10px] border bg-card font-mono text-sm text-muted-foreground shadow-xs transition-colors group-hover:text-foreground"
-              >
-                {initial(project.data.title)}
-              </span>
-              <span class="flex min-w-0 flex-col">
-                <span class="font-medium">{project.data.title}</span>
-                <span class="text-muted-foreground">
-                  {project.data.description}
-                </span>
-              </span>
-            </a>
+            <ProjectCard project={project} />
           </li>
         ))}
       </ul>
@@ -96,31 +63,14 @@ const row =
   )}
 
   {writing.length > 0 && (
-    <section class="enter mt-14" style="--stagger: 3" aria-labelledby="writing">
+    <section class="enter mt-16" style="--stagger: 3" aria-labelledby="writing">
       <h2 id="writing" class="mb-3 font-medium">
         Writing
       </h2>
-      <ul>
+      <ul class="max-w-2xl">
         {writing.map((post) => (
           <li>
-            <a href={`/writing/${post.id}/`} class={row}>
-              <span class="flex min-w-0 flex-1 flex-col">
-                <span class="font-medium">
-                  {post.data.title}
-                  <ArrowRight
-                    aria-hidden="true"
-                    class="ml-1 inline size-4 -translate-x-1 align-[-0.15em] text-muted-foreground opacity-0 transition duration-200 group-hover:translate-x-0 group-hover:opacity-100"
-                  />
-                </span>
-                <span class="text-muted-foreground">{post.data.category}</span>
-              </span>
-              <time
-                datetime={post.data.pubDate.toISOString()}
-                class="shrink-0 self-start pt-px text-sm text-muted-foreground tabular-nums"
-              >
-                {monthYear(post.data.pubDate)}
-              </time>
-            </a>
+            <EntryRow href={`/writing/${post.id}/`} {...post.data} />
           </li>
         ))}
       </ul>

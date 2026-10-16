@@ -9,7 +9,9 @@ Built with [Astro](https://astro.build).
 - **shadcn/ui** — `components.json` at the root, components in `src/components/ui/`, added
   with `pnpm dlx shadcn@latest add <name>`
 - **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
-  Writing adds a required `category`; projects take an optional `url` to the shipped project
+  Both require a `category` (what the index pages filter by) and take an optional `cover`
+  (`src` + `alt`), shown on the card and at the top of the page; projects also take an
+  optional `url` to the shipped project
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. The build fails on a slug claimed by two collections, and on
   a link to a slug no collection holds

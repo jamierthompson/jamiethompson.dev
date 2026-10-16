@@ -11,3 +11,13 @@ export function formatDate(date: Date): string {
     timeZone: "UTC",
   });
 }
+
+/** The same day, short enough for a list: "Jul 11, 2030". */
+export function formatShortDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
+}

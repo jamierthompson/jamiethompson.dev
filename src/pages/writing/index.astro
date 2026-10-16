@@ -1,0 +1,21 @@
+---
+import Base from "../../layouts/Base.astro";
+import CategoryIndex from "../../components/CategoryIndex.astro";
+import { published } from "../../lib/collections";
+import { SITE_NAME } from "../../lib/site";
+
+const posts = await published("writing");
+---
+
+<Base
+  title={`Writing — ${SITE_NAME}`}
+  description="Writing about design-engineering topics."
+>
+  <h1 class="enter text-3xl font-medium tracking-tight sm:text-4xl">Writing</h1>
+  <CategoryIndex
+    entries={posts.map((post) => ({
+      href: `/writing/${post.id}/`,
+      ...post.data,
+    }))}
+  />
+</Base>

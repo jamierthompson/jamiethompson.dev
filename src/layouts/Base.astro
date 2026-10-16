@@ -1,7 +1,7 @@
 ---
 import { Font } from "astro:assets";
 import SchemeToggle from "../components/SchemeToggle.astro";
-import { SITE_URL } from "../lib/site";
+import { SITE_NAME, SITE_URL } from "../lib/site";
 import "../styles/global.css";
 
 interface Props {
@@ -39,7 +39,6 @@ const canonicalUrl = new URL(Astro.url.pathname, SITE_URL).href;
  * `<title>`. The index title genuinely is the site name; there is no special
  * case for it.
  */
-const SITE_NAME = "Jamie Thompson";
 const TITLE_SUFFIX = ` — ${SITE_NAME}`;
 const pageTitle = (
   title.endsWith(TITLE_SUFFIX) ? title.slice(0, -TITLE_SUFFIX.length) : title

@@ -1,0 +1,120 @@
+---
+import EntryRow, { type Props as Entry } from "./EntryRow.astro";
+
+/**
+ * The body of an index page: a category filter beside a list of rows. The
+ * filter is a convenience the script provides — without it every entry is
+ * listed and the buttons stay out of the way. The chosen category lands in
+ * `?category=` so a filtered list can be linked to.
+ */
+interface Props {
+  entries: Entry[];
+}
+
+const { entries } = Astro.props;
+
+/** Every category in use, so the filter never offers an empty one. */
+const categories = [...new Set(entries.map((entry) => entry.category))].sort(
+  (a, b) => a.localeCompare(b),
+);
+
+const tab =
+  "shrink-0 rounded-md px-3 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-muted aria-pressed:text-foreground";
+---
+
+<category-filter
+  class="enter mt-10 block lg:grid lg:grid-cols-[12rem_minmax(0,42rem)] lg:gap-16"
+  style="--stagger: 1"
+>
+  <div
+    role="group"
+    aria-label="Filter by category"
+    class="-mx-4 flex gap-1 overflow-x-auto px-4 lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:self-start lg:px-0"
+  >
+    <button type="button" data-category="" aria-pressed="true" class={tab}>
+      All
+    </button>
+    {categories.map((category) => (
+      <button
+        type="button"
+        data-category={category}
+        aria-pressed="false"
+        class={tab}
+      >
+        {category}
+      </button>
+    ))}
+  </div>
+
+  <div class="mt-6 lg:mt-0">
+    <ul>
+      {entries.map((entry) => (
+        <li data-category={entry.category}>
+          <EntryRow {...entry} />
+        </li>
+      ))}
+    </ul>
+    <p data-empty hidden class="text-muted-foreground">
+      Nothing in this category yet.
+    </p>
+  </div>
+</category-filter>
+
+<style>
+  category-filter:not(:defined) [role="group"] {
+    display: none;
+  }
+</style>
+
+<script>
+  const PARAM = "category";
+
+  class CategoryFilter extends HTMLElement {
+    connectedCallback() {
+      const buttons = [
+        ...this.querySelectorAll<HTMLButtonElement>("button[data-category]"),
+      ];
+      const items = [
+        ...this.querySelectorAll<HTMLLIElement>("li[data-category]"),
+      ];
+      const empty = this.querySelector<HTMLElement>("[data-empty]");
+
+      const apply = (category: string) => {
+        let shown = 0;
+        for (const item of items) {
+          const match = category === "" || item.dataset.category === category;
+          item.hidden = !match;
+          if (match) shown += 1;
+        }
+        if (empty) empty.hidden = shown > 0;
+        for (const button of buttons) {
+          button.setAttribute(
+            "aria-pressed",
+            String(button.dataset.category === category),
+          );
+        }
+      };
+
+      this.addEventListener("click", (event) => {
+        const button = (event.target as Element).closest<HTMLButtonElement>(
+          "button[data-category]",
+        );
+        if (!button) return;
+        const category = button.dataset.category ?? "";
+        apply(category);
+        const url = new URL(location.href);
+        if (category === "") url.searchParams.delete(PARAM);
+        else url.searchParams.set(PARAM, category);
+        history.replaceState(null, "", url);
+      });
+
+      const requested = new URLSearchParams(location.search).get(PARAM) ?? "";
+      const known = buttons.some(
+        (button) => button.dataset.category === requested,
+      );
+      apply(known ? requested : "");
+    }
+  }
+
+  customElements.define("category-filter", CategoryFilter);
+</script>

@@ -5,6 +5,8 @@ const PREVIEW_PORT = 4331;
 
 export default defineConfig({
   testDir: "e2e",
+  // Restores the generated content files the fixture build overwrote.
+  globalTeardown: "./e2e/global-teardown.ts",
   // A committed `test.only` would otherwise let CI pass while silently
   // running a single test.
   forbidOnly: !!process.env.CI,

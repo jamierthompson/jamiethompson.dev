@@ -55,7 +55,10 @@ pnpm run test        # vitest
 pnpm run test:e2e    # builds, then playwright against the preview server
 ```
 
-`test:e2e` always starts its own `astro preview` on port 4331, not Astro's
+`test:e2e` builds with the fixture content, which rewrites `.astro/content-modules.mjs`
+to list the fixtures — a dev server left running would then fail to render any real MDX
+entry. Playwright's `globalTeardown` (`e2e/global-teardown.ts`) runs `astro sync`
+afterwards to put it back. `test:e2e` always starts its own `astro preview` on port 4331, not Astro's
 default 4321 — a backgrounded `astro dev` sits there for days, and testing it
 would test HMR output and an injected dev toolbar instead of the build that
 ships. It also builds with `CONTENT_DIR=./e2e/fixtures/content`, so the specs

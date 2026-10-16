@@ -16,7 +16,7 @@ export const getStaticPaths = (async () => {
 }) satisfies GetStaticPaths;
 
 const { post } = Astro.props;
-const { Content } = await render(post);
+const { Content, headings } = await render(post);
 const backlinks = await getBacklinks("writing", post.id);
 const { title, description, category, pubDate, cover } = post.data;
 ---
@@ -24,6 +24,7 @@ const { title, description, category, pubDate, cover } = post.data;
 <Entry
   title={title}
   description={description}
+  headings={headings}
   backlinks={backlinks}
   back={{ href: "/writing/", label: "Writing" }}
 >

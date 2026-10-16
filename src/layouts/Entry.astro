@@ -1,50 +1,147 @@
 ---
+import type { MarkdownHeading } from "astro";
 import ArrowLeft from "@lucide/astro/icons/arrow-left";
+import ChevronDown from "@lucide/astro/icons/chevron-down";
 import Backlinks from "../components/Backlinks.astro";
+import TableOfContents from "../components/TableOfContents.astro";
 import { SITE_NAME } from "../lib/site";
+import { buildToc } from "../lib/toc";
 import type { Backlink } from "../lib/wikilinks";
 import Base from "./Base.astro";
 
 /**
  * The page for one entry of either collection: a centered title with the
- * `meta` slot under it, and the content in a text column. The way back to
- * the index is the header nav; under `md`, where the nav is behind a button,
- * a back link stands in for it.
+ * `meta` slot under it, the content in a text column, and a table of contents
+ * built from the content's headings — a sticky rail to the left of the column
+ * at `xl`, a collapsible row above it below that. The way back to the index
+ * is the header nav; under `md`, where the nav is behind a button, a back
+ * link stands in for it.
  */
 interface Props {
   title: string;
   description: string;
+  headings: MarkdownHeading[];
   backlinks: Backlink[];
   /** The index this entry belongs to, for the back link. */
   back: { href: string; label: string };
 }
 
-const { title, description, backlinks, back } = Astro.props;
+const { title, description, headings, backlinks, back } = Astro.props;
+const toc = buildToc(headings);
 ---
 
 <Base title={`${title} — ${SITE_NAME}`} description={description}>
-  <div class="mx-auto w-full max-w-2xl">
-    <a
-      href={back.href}
-      class="enter mb-6 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:hidden"
-    >
-      <ArrowLeft aria-hidden="true" class="size-4" />
-      {back.label}
-    </a>
+  <div class="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] xl:gap-8">
+    {toc.length > 0 && (
+      <table-of-contents class="hidden xl:block">
+        <nav
+          aria-labelledby="toc-heading"
+          class="enter sticky top-24 w-40"
+          style="--stagger: 2"
+        >
+          <p id="toc-heading" class="mb-2 text-sm font-medium">
+            Table of Contents
+          </p>
+          <TableOfContents toc={toc} />
+        </nav>
+      </table-of-contents>
+    )}
 
-    <article>
-      <header class="enter text-center" style="--stagger: 1">
-        <h1 class="text-3xl font-medium tracking-tight text-balance sm:text-4xl">
-          {title}
-        </h1>
-        <slot name="meta" />
-      </header>
+    <div class="mx-auto w-full max-w-2xl xl:col-start-2 xl:mx-0 xl:max-w-none">
+      <a
+        href={back.href}
+        class="enter mb-6 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:hidden"
+      >
+        <ArrowLeft aria-hidden="true" class="size-4" />
+        {back.label}
+      </a>
 
-      <div class="enter prose prose-bleed mt-10" style="--stagger: 2">
-        <slot />
-      </div>
-    </article>
+      <article>
+        <header class="enter text-center" style="--stagger: 1">
+          <h1 class="text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+            {title}
+          </h1>
+          <slot name="meta" />
+        </header>
 
-    <Backlinks backlinks={backlinks} />
+        {toc.length > 0 && (
+          <details
+            class="group enter mt-10 border-y xl:hidden"
+            style="--stagger: 2"
+          >
+            <summary class="flex cursor-pointer list-none items-center justify-between py-3 font-medium [&::-webkit-details-marker]:hidden">
+              Table of Contents
+              <ChevronDown
+                aria-hidden="true"
+                class="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+              />
+            </summary>
+            <nav aria-label="Table of Contents" class="pb-3">
+              <TableOfContents toc={toc} />
+            </nav>
+          </details>
+        )}
+
+        <div class="enter prose prose-bleed mt-10" style="--stagger: 3">
+          <slot />
+        </div>
+      </article>
+
+      <Backlinks backlinks={backlinks} />
+    </div>
   </div>
 </Base>
+
+<script>
+  /**
+   * Marks the sidebar link for the heading the reader is at: the last heading
+   * whose top has passed the sticky header. Scroll-driven rather than an
+   * IntersectionObserver so a short final section, which never reaches the
+   * top of the viewport, still becomes current at the end of the page.
+   */
+  class TableOfContentsRail extends HTMLElement {
+    connectedCallback() {
+      const links = [
+        ...this.querySelectorAll<HTMLAnchorElement>("a[href^='#']"),
+      ];
+      const headings = links
+        .map((link) =>
+          document.getElementById(decodeURIComponent(link.hash.slice(1))),
+        )
+        .filter((heading): heading is HTMLElement => heading !== null);
+      if (headings.length === 0) return;
+
+      const THRESHOLD = 96;
+      let frame = 0;
+      const update = () => {
+        frame = 0;
+        const atEnd =
+          window.innerHeight + window.scrollY >=
+          document.documentElement.scrollHeight - 2;
+        let current = atEnd ? headings.at(-1) : undefined;
+        if (!current) {
+          for (const heading of headings) {
+            if (heading.getBoundingClientRect().top <= THRESHOLD)
+              current = heading;
+          }
+        }
+        for (const link of links) {
+          if (link.hash === `#${current?.id ?? ""}`) {
+            link.setAttribute("aria-current", "location");
+          } else {
+            link.removeAttribute("aria-current");
+          }
+        }
+      };
+      const schedule = () => {
+        if (!frame) frame = requestAnimationFrame(update);
+      };
+
+      addEventListener("scroll", schedule, { passive: true });
+      addEventListener("resize", schedule);
+      update();
+    }
+  }
+
+  customElements.define("table-of-contents", TableOfContentsRail);
+</script>

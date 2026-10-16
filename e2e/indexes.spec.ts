@@ -83,3 +83,50 @@ test.describe("the projects index", () => {
     ).toBeVisible();
   });
 });
+
+test.describe("the table of contents", () => {
+  test("at desktop widths it is a rail that follows the reader", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/writing/fixture-essay/");
+    const toc = page.getByRole("navigation", { name: "Table of Contents" });
+    await expect(toc).toBeVisible();
+    await expect(toc.getByRole("link")).toHaveText([
+      "A heading",
+      "A subheading",
+      "Another heading",
+    ]);
+
+    await toc.getByRole("link", { name: "Another heading" }).click();
+    await expect(page).toHaveURL(/#another-heading$/);
+    await expect(
+      toc.getByRole("link", { name: "Another heading" }),
+    ).toHaveAttribute("aria-current", "location");
+    await expect(
+      toc.getByRole("link", { name: "A heading" }),
+    ).not.toHaveAttribute("aria-current");
+  });
+
+  test("at narrow widths it folds into a row above the text", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 375, height: 812 });
+    await page.goto("/writing/fixture-essay/");
+    const details = page.locator("details", { hasText: "Table of Contents" });
+    await expect(details).toBeVisible();
+    await expect(details.getByRole("link", { name: "A heading" })).toBeHidden();
+    await details.locator("summary").click();
+    await expect(
+      details.getByRole("link", { name: "A heading" }),
+    ).toBeVisible();
+  });
+
+  test("a page with no headings has no table of contents", async ({ page }) => {
+    await page.goto("/writing/fixture-note/");
+    await expect(
+      page.getByRole("navigation", { name: "Table of Contents" }),
+    ).toBeHidden();
+    await expect(page.locator("details")).toHaveCount(0);
+  });
+});

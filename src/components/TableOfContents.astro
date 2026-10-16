@@ -1,0 +1,38 @@
+---
+import type { TocEntry } from "../lib/toc";
+
+/**
+ * The list half of a table of contents: nested links to the page's headings.
+ * The caller supplies the landmark and its label, because the same list sits
+ * in a sticky sidebar at desktop widths and inside a <details> below them.
+ */
+interface Props {
+  toc: TocEntry[];
+}
+
+const { toc } = Astro.props;
+
+const link =
+  "block py-1 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current]:text-foreground";
+---
+
+<ol>
+  {toc.map((entry) => (
+    <li>
+      <a href={`#${entry.slug}`} class={link}>
+        {entry.text}
+      </a>
+      {entry.children.length > 0 && (
+        <ol class="pl-4">
+          {entry.children.map((child) => (
+            <li>
+              <a href={`#${child.slug}`} class={link}>
+                {child.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      )}
+    </li>
+  ))}
+</ol>

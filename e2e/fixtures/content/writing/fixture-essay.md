@@ -10,4 +10,16 @@ in the middle of a paragraph long enough to wrap, so the external-link marker is
 exercised where real prose would put it. It also points back at
 [[fixture-note|the fixture note]] by wikilink.
 
+## A heading
+
+The headings here exist for the table of contents.
+
+### A subheading
+
+Nested one level under the heading above.
+
+## Another heading
+
+The last section on the page.
+
 [ref]: https://example.com/

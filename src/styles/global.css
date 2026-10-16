@@ -117,10 +117,23 @@
      decorative gray that falls under the 3:1 a focus indicator needs against
      the page (WCAG 2.2 1.4.11). */
   a:focus-visible,
-  button:focus-visible {
+  button:focus-visible,
+  summary:focus-visible {
     outline: 2px solid var(--foreground);
     outline-offset: 2px;
     border-radius: 2px;
+  }
+
+  /* A heading reached from the table of contents lands below the sticky
+     header instead of under it. */
+  [id] {
+    scroll-margin-top: 5rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
   }
 }
 

@@ -84,6 +84,18 @@ test.describe("the projects index", () => {
   });
 });
 
+test.describe("the home page", () => {
+  test("features what featured.yaml lists, in its order", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("region", { name: "Writing" }).getByRole("link"),
+    ).toHaveText([/A fixture note/, /A fixture essay/]);
+    await expect(
+      page.getByRole("region", { name: "Projects" }).getByRole("link"),
+    ).toHaveText([/A fixture project/]);
+  });
+});
+
 test.describe("the table of contents", () => {
   test("at desktop widths it is a rail that follows the reader", async ({
     page,

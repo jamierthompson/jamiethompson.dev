@@ -1,0 +1,9 @@
+# What the home page features, top to bottom. Each is a slug — the filename
+# without its extension — from the collection it is listed under. The build
+# fails on a slug that doesn't exist or is a draft.
+home:
+  projects:
+    - this-site
+  writing:
+    - hello-world
+    - on-writing-in-public

@@ -12,6 +12,9 @@ Built with [Astro](https://astro.build).
   Both require a `category` (what the index pages filter by) and take an optional `cover`
   (`src` + `alt`), shown on the card and at the top of the page; projects also take an
   optional `url` to the shipped project
+- **Featured content** — `src/content/featured.yaml` lists, in order, which projects and
+  posts the home page shows. The build fails on a slug that doesn't exist, is a draft, or
+  is listed twice
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. The build fails on a slug claimed by two collections, and on
   a link to a slug no collection holds
@@ -85,7 +88,7 @@ and `www.jamiethompsondesign.com` 308-redirect to it.
 ```
 src/
   components/       # shared components
-  content/          # projects and writing (the content)
+  content/          # projects and writing, plus featured.yaml
   content.config.ts # the collection schemas
   layouts/          # Base.astro and Entry.astro
   lib/              # build-time helpers, tests beside them

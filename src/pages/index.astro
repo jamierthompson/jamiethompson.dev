@@ -3,11 +3,11 @@ import Base from "../layouts/Base.astro";
 import ExternalLink from "../components/ExternalLink.astro";
 import ProjectCard from "../components/ProjectCard.astro";
 import EntryRow from "../components/EntryRow.astro";
-import { published } from "../lib/collections";
+import { getFeatured } from "../lib/featured";
 import { SITE_NAME } from "../lib/site";
 
-const projects = await published("projects");
-const writing = await published("writing");
+/** Which entries, and in what order, is `src/content/featured.yaml`. */
+const { projects, writing } = await getFeatured();
 ---
 
 <Base

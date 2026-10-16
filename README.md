@@ -5,13 +5,16 @@ Built with [Astro](https://astro.build).
 
 ## Stack
 
-- **Astro** — static output; interactive islands only where a page embeds a demo
+- **Astro** — static output; React islands (`@astrojs/react`) where a page needs one
+- **shadcn/ui** — `components.json` at the root, components in `src/components/ui/`, added
+  with `pnpm dlx shadcn@latest add <name>`
 - **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
   Writing adds a required `category`; projects take an optional `url` to the shipped project
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. The build fails on a slug claimed by two collections, and on
   a link to a slug no collection holds
 - **Tailwind CSS v4** via `@tailwindcss/vite`, with `@tailwindcss/typography` for prose
+  and `tw-animate-css` for the shadcn component animations
 - **Geist / Geist Mono**, self-hosted at build time by Astro's Fonts API
 - **Prettier** (formatting), **Vitest** (unit tests), **Playwright** (primary-flow E2E)
 

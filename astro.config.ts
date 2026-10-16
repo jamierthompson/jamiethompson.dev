@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { defineConfig, fontProviders } from "astro/config";
 import { unified } from "@astrojs/markdown-remark";
 import mdx from "@astrojs/mdx";
+import react from "@astrojs/react";
 import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { wikiLinkPlugin } from "remark-wiki-link";
@@ -41,7 +42,7 @@ if (collisions.length > 0) {
 
 export default defineConfig({
   site: SITE_URL,
-  integrations: [mdx(), sitemap()],
+  integrations: [react(), mdx(), sitemap()],
   vite: { plugins: [tailwindcss()] },
   // Self-hosted at build time; the variables are mapped to Tailwind's
   // --font-sans / --font-mono in src/styles/global.css.

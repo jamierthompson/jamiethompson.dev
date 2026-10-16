@@ -77,7 +77,7 @@ Vercel's build-and-deploy check.
 
 ## Deploy
 
-Vercel project `jamiethompson.design` (team `jamie-studio`), connected to this
+Vercel project `jamiethompson.design`, connected to this
 repo: every push to `main` deploys to production, every pull request gets a
 preview. The canonical host is `jamiethompson.design` — it is `SITE_URL` in
 `src/lib/site.ts` — and `www.jamiethompson.design`, `jamiethompsondesign.com`

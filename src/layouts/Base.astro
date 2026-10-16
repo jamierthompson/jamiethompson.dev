@@ -1,5 +1,6 @@
 ---
 import { Font } from "astro:assets";
+import PaintBackground from "../components/PaintBackground.astro";
 import SiteFooter from "../components/SiteFooter.astro";
 import SiteHeader from "../components/SiteHeader.astro";
 import { SITE_NAME, SITE_URL } from "../lib/site";
@@ -109,6 +110,7 @@ const TWITTER_CARD = "summary";
     </script>
   </head>
   <body class="flex min-h-svh flex-col">
+    <PaintBackground />
     {/* The header is sticky, so a keyboard user would otherwise tab through
         it on every page before reaching anything. */}
     <a

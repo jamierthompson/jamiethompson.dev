@@ -1,0 +1,679 @@
+---
+/**
+ * The page background: a dark page of characters that gusts of light
+ * travel across, a click sending a ripple out that glows, and the pointer
+ * warming the air where it moves.
+ *
+ * It is drawn in two passes, so the expensive part never runs per pixel.
+ * The field pass (`.field.*.glsl`) works out the light, the air's direction
+ * and the glow at one sample per character cell, into a small texture. The
+ * glyph pass (`.glyph.*.glsl`) draws one quad per cell from a glyph atlas,
+ * lit by that texture, with each cell stepping through a character sequence
+ * at its own pace, and throws away every cell with no ink or no light
+ * before any pixel is shaded. The script here builds the atlas, seeds the
+ * visit's wind, turns clicks and pointer moves into taps and wakes, feeds
+ * both passes, and decides when to draw: 25 frames a second while the paint
+ * moves, 60 during a ripple, nothing once the page has been left alone,
+ * and nothing while the window is not in front.
+ *
+ * Decoration only: it sits behind everything at a negative z-index, takes no
+ * pointer events and is hidden from assistive tech. Without WebGL2, or on a
+ * software renderer, the canvas stays blank and the page looks as before.
+ */
+---
+
+<paint-background>
+  <canvas
+    aria-hidden="true"
+    class="pointer-events-none fixed inset-0 -z-10 h-lvh w-full"
+  ></canvas>
+</paint-background>
+
+<script>
+  import fieldFrag from "./PaintBackground.field.frag.glsl?raw";
+  import fieldVert from "./PaintBackground.field.vert.glsl?raw";
+  import glyphFrag from "./PaintBackground.glyph.frag.glsl?raw";
+  import glyphVert from "./PaintBackground.glyph.vert.glsl?raw";
+  import {
+    ATLAS_COLUMNS,
+    ATLAS_ROWS,
+    Budget,
+    GLYPHS,
+    SEQUENCE,
+    Touches,
+    heartProfile,
+  } from "../lib/paint";
+
+  /** The canvas renders at the device's pixel density up to this. */
+  const MAX_DPR = 2;
+  /** The characters, in CSS px. */
+  const FONT_SIZE = 12;
+  const LINE_HEIGHT = 17;
+  /** A pixel of the atlas with at least this much coverage counts as ink. */
+  const INK_THRESHOLD = 8;
+  /** Milliseconds between frames: 25 a second while the paint drifts, 60 during a ripple. */
+  const FRAME_MS = 40;
+  const RIPPLE_FRAME_MS = 10;
+  /** Seconds the paint keeps moving after the last touch, how long it takes
+   * to settle to a stop, and how long to come back. */
+  const BUDGET_S = 180;
+  const SETTLE_S = 8;
+  const RESUME_S = 3;
+  /** Seconds the gusts take to fade in on a fresh page. */
+  const REVEAL_S = 4;
+  /** How strong the ink is in plain light and at the height of a glow, 0 to 1. */
+  const BASE = 0.26;
+  const CAP = 0.9;
+  /** How much a stroke's facing to the wind matters, 0 to 1. */
+  const FRICTION = 0.6;
+  /** About how many characters a second a cell steps through. */
+  const FLICK = 1.2;
+  /** A click on a control does what the control does, with no ripple under it. */
+  const CONTROL =
+    "a, button, input, textarea, select, summary, label, [role='button']";
+  const SOFTWARE_RENDERER = /swiftshader|llvmpipe|softpipe|software/i;
+  /** Texture units, one per texture, bound once. */
+  const UNIT = { field: 0, atlas: 1, sequence: 2, boxes: 3, heart: 4 } as const;
+
+  /** The visit's wind, from its seed: a heading well off vertical, either
+   * way, a speed, and how long and wide a gust is, all in CSS px. */
+  function windFor(seed: number) {
+    let state = seed >>> 0;
+    const next = () => {
+      state =
+        (Math.imul(state ^ (state >>> 15), 0x2c1b3c6d) + 0x9e3779b9) >>> 0;
+      return state / 4294967296;
+    };
+    const pick = (lo: number, hi: number) => lo + (hi - lo) * next();
+    const tilt = pick(15, 40) * (Math.PI / 180);
+    const heading =
+      (next() < 0.5 ? tilt : Math.PI - tilt) * (next() < 0.5 ? 1 : -1);
+    return {
+      heading,
+      speed: pick(40, 65),
+      gustLength: pick(350, 550),
+      gustWidth: pick(110, 190),
+    };
+  }
+
+  /** Smoothstep from 0 to 1 over [0, 1]. */
+  function smooth(x: number) {
+    const t = Math.min(1, Math.max(0, x));
+    return t * t * (3 - 2 * t);
+  }
+
+  function compile(
+    gl: WebGL2RenderingContext,
+    type: number,
+    source: string,
+  ): WebGLShader {
+    const shader = gl.createShader(type);
+    if (!shader) throw new Error("WebGL could not create a shader.");
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      throw new Error(
+        gl.getShaderInfoLog(shader) ?? "A shader failed to compile.",
+      );
+    }
+    return shader;
+  }
+
+  function link(
+    gl: WebGL2RenderingContext,
+    vertex: string,
+    fragment: string,
+  ): WebGLProgram {
+    const program = gl.createProgram();
+    if (!program) throw new Error("WebGL could not create a program.");
+    gl.attachShader(program, compile(gl, gl.VERTEX_SHADER, vertex));
+    gl.attachShader(program, compile(gl, gl.FRAGMENT_SHADER, fragment));
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      throw new Error(
+        gl.getProgramInfoLog(program) ?? "The shaders failed to link.",
+      );
+    }
+    return program;
+  }
+
+  /** A texture on its unit, sampled exactly (`nearest`) or blended (`linear`). */
+  function texture(
+    gl: WebGL2RenderingContext,
+    unit: number,
+    filter: "nearest" | "linear",
+  ): WebGLTexture {
+    const tex = gl.createTexture();
+    if (!tex) throw new Error("WebGL could not create a texture.");
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    const mode = filter === "linear" ? gl.LINEAR : gl.NEAREST;
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, mode);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, mode);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    return tex;
+  }
+
+  /** A 2D context to measure text and read colors with. */
+  function context2d(): CanvasRenderingContext2D {
+    const ctx = document
+      .createElement("canvas")
+      .getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("Could not get a 2D canvas context.");
+    return ctx;
+  }
+
+  /** The GPU (or software) behind the context, unmasked where the browser allows it. */
+  function renderer(gl: WebGL2RenderingContext): string {
+    const debug = gl.getExtension("WEBGL_debug_renderer_info");
+    const name = debug
+      ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL)
+      : gl.getParameter(gl.RENDERER);
+    return typeof name === "string" ? name : "";
+  }
+
+  /**
+   * A CSS color as the shader wants it: three channels from 0 to 1. The
+   * tokens are `oklch()`, which a 2D canvas can parse and this script need
+   * not: paint one pixel with the color and read it back.
+   */
+  function rgb(
+    probe: CanvasRenderingContext2D,
+    color: string,
+  ): [number, number, number] {
+    probe.fillStyle = color;
+    probe.fillRect(0, 0, 1, 1);
+    const [r = 0, g = 0, b = 0] = probe.getImageData(0, 0, 1, 1).data;
+    return [r / 255, g / 255, b / 255];
+  }
+
+  /**
+   * The glyph atlas: every character in GLYPHS drawn once, white on black,
+   * in a grid of cells the size of a cell on screen, so a glyph's pixels
+   * map one to one onto the page. Returns the coverage and, per glyph, the
+   * box its ink actually occupies within its cell (w = 0 for none).
+   */
+  function buildAtlas(
+    font: string,
+    cellWidth: number,
+    cellHeight: number,
+    advance: number,
+  ): { coverage: Uint8Array; boxes: Uint8Array } {
+    const width = ATLAS_COLUMNS * cellWidth;
+    const height = ATLAS_ROWS * cellHeight;
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) throw new Error("Could not get a 2D canvas context.");
+    ctx.font = font;
+    ctx.fillStyle = "#fff";
+    ctx.textBaseline = "alphabetic";
+    const metrics = ctx.measureText("Mg|");
+    const ascent = metrics.fontBoundingBoxAscent;
+    const descent = metrics.fontBoundingBoxDescent;
+    const baseline = Math.round((cellHeight - ascent - descent) / 2 + ascent);
+    const left = Math.floor((cellWidth - advance) / 2);
+    for (let i = 0; i < GLYPHS.length; i++) {
+      const x = (i % ATLAS_COLUMNS) * cellWidth;
+      const y = Math.floor(i / ATLAS_COLUMNS) * cellHeight;
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(x, y, cellWidth, cellHeight); // a wide glyph stays in its cell
+      ctx.clip();
+      ctx.fillText(GLYPHS[i] ?? " ", x + left, y + baseline);
+      ctx.restore();
+    }
+    const data = ctx.getImageData(0, 0, width, height).data;
+    const coverage = new Uint8Array(width * height);
+    for (let i = 0; i < coverage.length; i++)
+      coverage[i] = data[i * 4 + 3] ?? 0;
+
+    const boxes = new Uint8Array(ATLAS_COLUMNS * ATLAS_ROWS * 4);
+    for (let i = 0; i < GLYPHS.length; i++) {
+      const x0 = (i % ATLAS_COLUMNS) * cellWidth;
+      const y0 = Math.floor(i / ATLAS_COLUMNS) * cellHeight;
+      let minX = cellWidth;
+      let minY = cellHeight;
+      let maxX = -1;
+      let maxY = -1;
+      for (let y = 0; y < cellHeight; y++) {
+        for (let x = 0; x < cellWidth; x++) {
+          if ((coverage[(y0 + y) * width + x0 + x] ?? 0) < INK_THRESHOLD) {
+            continue;
+          }
+          minX = Math.min(minX, x);
+          minY = Math.min(minY, y);
+          maxX = Math.max(maxX, x);
+          maxY = Math.max(maxY, y);
+        }
+      }
+      if (maxX >= 0) {
+        boxes.set([minX, minY, maxX - minX + 1, maxY - minY + 1], i * 4);
+      }
+    }
+    return { coverage, boxes };
+  }
+
+  /** Sets everything up and starts drawing. Returns the function that stops it. */
+  function start(canvas: HTMLCanvasElement, gl: WebGL2RenderingContext) {
+    // The loop's state, first: setup below schedules a frame as it goes.
+    let timer = 0;
+    let frame = 0;
+    let stopped = false;
+
+    // ---- This visit ----
+    const seed = (Math.random() * 2 ** 32) >>> 0;
+    const wind = windFor(seed);
+
+    // ---- The two programs and their uniforms ----
+    const fieldProgram = link(gl, fieldVert, fieldFrag);
+    const glyphProgram = link(gl, glyphVert, glyphFrag);
+    const uniform = (program: WebGLProgram, name: string) =>
+      gl.getUniformLocation(program, name);
+    const field = {
+      size: uniform(fieldProgram, "u_fieldSize"),
+      sampleCss: uniform(fieldProgram, "u_sampleCss"),
+      time: uniform(fieldProgram, "u_time"),
+      now: uniform(fieldProgram, "u_now"),
+      reveal: uniform(fieldProgram, "u_reveal"),
+      tapCount: uniform(fieldProgram, "u_tapCount"),
+      taps: uniform(fieldProgram, "u_taps[0]"),
+      wakeCount: uniform(fieldProgram, "u_wakeCount"),
+      wakes: uniform(fieldProgram, "u_wakes[0]"),
+      ways: uniform(fieldProgram, "u_ways[0]"),
+    };
+    const glyph = {
+      grid: uniform(glyphProgram, "u_grid"),
+      cell: uniform(glyphProgram, "u_cell"),
+      buffer: uniform(glyphProgram, "u_buffer"),
+      gridDevice: uniform(glyphProgram, "u_gridDevice"),
+      atlasSize: uniform(glyphProgram, "u_atlasSize"),
+      time: uniform(glyphProgram, "u_time"),
+      bg: uniform(glyphProgram, "u_bg"),
+      ink: uniform(glyphProgram, "u_ink"),
+      glow: uniform(glyphProgram, "u_glow"),
+    };
+    gl.useProgram(fieldProgram);
+    gl.uniform1ui(uniform(fieldProgram, "u_seed"), seed);
+    gl.uniform1i(uniform(fieldProgram, "u_heart"), UNIT.heart);
+    gl.uniform4f(
+      uniform(fieldProgram, "u_wind"),
+      wind.heading,
+      wind.speed,
+      wind.gustLength,
+      wind.gustWidth,
+    );
+    gl.useProgram(glyphProgram);
+    gl.uniform1i(uniform(glyphProgram, "u_field"), UNIT.field);
+    gl.uniform1i(uniform(glyphProgram, "u_atlas"), UNIT.atlas);
+    gl.uniform1i(uniform(glyphProgram, "u_sequence"), UNIT.sequence);
+    gl.uniform1i(uniform(glyphProgram, "u_boxes"), UNIT.boxes);
+    gl.uniform1ui(uniform(glyphProgram, "u_seed"), seed);
+    gl.uniform1f(uniform(glyphProgram, "u_flick"), FLICK);
+    gl.uniform1i(uniform(glyphProgram, "u_count"), SEQUENCE.length);
+    gl.uniform1f(uniform(glyphProgram, "u_base"), BASE);
+    gl.uniform1f(uniform(glyphProgram, "u_cap"), CAP);
+    gl.uniform1f(uniform(glyphProgram, "u_friction"), FRICTION);
+
+    // ---- The textures ----
+    // Bytes, not words: the single-channel textures have odd row lengths.
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+    const fieldTexture = texture(gl, UNIT.field, "linear");
+    texture(gl, UNIT.atlas, "linear");
+    texture(gl, UNIT.sequence, "nearest");
+    texture(gl, UNIT.boxes, "nearest");
+    gl.activeTexture(gl.TEXTURE0 + UNIT.sequence);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.R8UI,
+      SEQUENCE.length,
+      1,
+      0,
+      gl.RED_INTEGER,
+      gl.UNSIGNED_BYTE,
+      SEQUENCE,
+    );
+    // The heart's outline, wrapping around so any direction finds a radius.
+    const heart = heartProfile();
+    texture(gl, UNIT.heart, "linear");
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.R8,
+      heart.length,
+      1,
+      0,
+      gl.RED,
+      gl.UNSIGNED_BYTE,
+      Uint8Array.from(heart, (r) => Math.round(r * 255)),
+    );
+    const fieldFramebuffer = gl.createFramebuffer();
+    if (!fieldFramebuffer)
+      throw new Error("WebGL could not create a framebuffer.");
+
+    const probe = context2d();
+    const style = getComputedStyle(document.documentElement);
+    const family = style.getPropertyValue("--font-geist-mono");
+
+    let dpr = 1;
+    let columns = 0;
+    let rows = 0;
+    let cellWidth = 0;
+    let cellHeight = 0;
+    let atlasCell = "";
+    let bg: [number, number, number] = [0, 0, 0];
+
+    function fontAt(dpr: number) {
+      return `${FONT_SIZE * dpr}px ${family}`;
+    }
+
+    /** The atlas and the glyph boxes, again only when the cell size changes. */
+    function uploadAtlas(advance: number) {
+      const key = `${cellWidth}x${cellHeight}`;
+      if (key === atlasCell) return;
+      atlasCell = key;
+      const { coverage, boxes } = buildAtlas(
+        fontAt(dpr),
+        cellWidth,
+        cellHeight,
+        advance,
+      );
+      gl.activeTexture(gl.TEXTURE0 + UNIT.atlas);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.R8,
+        ATLAS_COLUMNS * cellWidth,
+        ATLAS_ROWS * cellHeight,
+        0,
+        gl.RED,
+        gl.UNSIGNED_BYTE,
+        coverage,
+      );
+      gl.activeTexture(gl.TEXTURE0 + UNIT.boxes);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA8UI,
+        ATLAS_COLUMNS * ATLAS_ROWS,
+        1,
+        0,
+        gl.RGBA_INTEGER,
+        gl.UNSIGNED_BYTE,
+        boxes,
+      );
+      gl.useProgram(glyphProgram);
+      gl.uniform2f(
+        glyph.atlasSize,
+        ATLAS_COLUMNS * cellWidth,
+        ATLAS_ROWS * cellHeight,
+      );
+    }
+
+    function resize(cssWidth: number, cssHeight: number) {
+      dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
+      canvas.width = Math.round(cssWidth * dpr);
+      canvas.height = Math.round(cssHeight * dpr);
+
+      // Cells are whole device pixels, so a glyph's pixels land on pixels.
+      probe.font = fontAt(dpr);
+      const advance = probe.measureText("0").width || FONT_SIZE * dpr * 0.6;
+      cellWidth = Math.max(1, Math.round(advance));
+      cellHeight = Math.max(1, Math.round(LINE_HEIGHT * dpr));
+      columns = Math.ceil(canvas.width / cellWidth);
+      rows = Math.ceil(canvas.height / cellHeight);
+      uploadAtlas(advance);
+
+      gl.activeTexture(gl.TEXTURE0 + UNIT.field);
+      gl.bindTexture(gl.TEXTURE_2D, fieldTexture);
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA8,
+        columns,
+        rows * 2,
+        0,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        null,
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fieldFramebuffer);
+      gl.framebufferTexture2D(
+        gl.FRAMEBUFFER,
+        gl.COLOR_ATTACHMENT0,
+        gl.TEXTURE_2D,
+        fieldTexture,
+        0,
+      );
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+      gl.useProgram(fieldProgram);
+      gl.uniform2f(field.size, columns, rows * 2);
+      gl.uniform2f(field.sampleCss, cellWidth / dpr, cellHeight / dpr / 2);
+      gl.useProgram(glyphProgram);
+      gl.uniform2i(glyph.grid, columns, rows);
+      gl.uniform2i(glyph.cell, cellWidth, cellHeight);
+      gl.uniform2f(glyph.buffer, canvas.width, canvas.height);
+      gl.uniform2f(glyph.gridDevice, columns * cellWidth, rows * cellHeight);
+      redraw();
+    }
+    const sizeWatch = new ResizeObserver(([entry]) => {
+      if (!entry) return;
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) resize(width, height);
+    });
+    sizeWatch.observe(canvas);
+
+    // The first atlas may be drawn before the mono font has loaded and use the
+    // fallback; build it again once it has.
+    document.fonts.load(fontAt(1)).then(() => {
+      if (stopped || columns === 0) return;
+      atlasCell = "";
+      resize(canvas.width / dpr, canvas.height / dpr);
+    });
+
+    // ---- Colors: from the tokens, again whenever the scheme changes ----
+    function readColors() {
+      const style = getComputedStyle(document.documentElement);
+      bg = rgb(probe, style.getPropertyValue("--background"));
+      gl.useProgram(glyphProgram);
+      gl.uniform3fv(glyph.bg, bg);
+      gl.uniform3fv(
+        glyph.ink,
+        rgb(probe, style.getPropertyValue("--paint-ink")),
+      );
+      gl.uniform3fv(
+        glyph.glow,
+        rgb(probe, style.getPropertyValue("--paint-glow")),
+      );
+      redraw();
+    }
+    readColors();
+    const schemeWatch = new MutationObserver(readColors);
+    schemeWatch.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    // ---- The hand: taps and wakes, on the wall clock ----
+    const touches = new Touches();
+    const t0 = performance.now();
+    const now = () => (performance.now() - t0) / 1000;
+
+    // ---- When to draw ----
+    // The paint has a budget of motion that any touch tops up, and a frame
+    // is drawn only while there is something to move: the paint, or what
+    // the hand did. Nothing is drawn while the window is behind another or
+    // the tab is hidden, and nothing moves for anyone who asked for less
+    // motion.
+    const budget = new Budget(BUDGET_S, SETTLE_S, RESUME_S);
+    const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)");
+    let paintTime = 0;
+    let lastFrameAt = 0;
+
+    const inFront = () =>
+      document.visibilityState === "visible" && document.hasFocus();
+    const moving = () => !reduceMotion.matches && !budget.calm;
+    const allowed = () =>
+      !stopped && inFront() && (moving() || touches.busy(now()));
+
+    function draw() {
+      if (columns === 0) return;
+      const hand = touches.frame(now());
+      // Pass 1: the field, into its texture. The texture is unbound from
+      // its unit meanwhile; sampling a texture being drawn to is an error.
+      gl.activeTexture(gl.TEXTURE0 + UNIT.field);
+      gl.bindTexture(gl.TEXTURE_2D, null);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, fieldFramebuffer);
+      gl.viewport(0, 0, columns, rows * 2);
+      gl.useProgram(fieldProgram);
+      gl.uniform1f(field.time, paintTime);
+      gl.uniform1f(field.now, hand.now);
+      gl.uniform1f(
+        field.reveal,
+        reduceMotion.matches ? 1 : smooth(paintTime / REVEAL_S),
+      );
+      gl.uniform1i(field.tapCount, hand.tapCount);
+      gl.uniform1i(field.wakeCount, hand.wakeCount);
+      if (hand.tapCount > 0) gl.uniform4fv(field.taps, hand.taps);
+      if (hand.wakeCount > 0) {
+        gl.uniform4fv(field.wakes, hand.wakes);
+        gl.uniform4fv(field.ways, hand.ways);
+      }
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.bindTexture(gl.TEXTURE_2D, fieldTexture);
+      // Pass 2: the glyphs, onto the canvas.
+      gl.viewport(0, 0, canvas.width, canvas.height);
+      gl.clearColor(bg[0], bg[1], bg[2], 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.useProgram(glyphProgram);
+      gl.uniform1f(glyph.time, paintTime);
+      gl.drawArrays(gl.TRIANGLES, 0, 6 * columns * rows);
+    }
+
+    /** One frame now, with the paint where it is: after a resize or a scheme change. */
+    function redraw() {
+      if (!stopped) draw();
+    }
+
+    function tick() {
+      frame = 0;
+      if (stopped) return;
+      const t = performance.now();
+      const dt = Math.min((t - lastFrameAt) / 1000, 0.25);
+      lastFrameAt = t;
+      if (!reduceMotion.matches) paintTime += budget.advance(dt);
+      draw();
+      if (allowed()) schedule();
+    }
+    function schedule() {
+      if (timer || frame || stopped) return;
+      timer = window.setTimeout(
+        () => {
+          timer = 0;
+          frame = requestAnimationFrame(tick);
+        },
+        touches.rippling(now()) ? RIPPLE_FRAME_MS : FRAME_MS,
+      );
+    }
+    /** Starts the loop if it is not running and there is reason to. */
+    function wake() {
+      if (timer || frame || !allowed()) return;
+      lastFrameAt = performance.now();
+      schedule();
+    }
+
+    // A touch tops the budget up; a touch on a calm page starts it again.
+    const touch = () => {
+      budget.touch();
+      wake();
+    };
+    function onPointerDown(event: PointerEvent) {
+      touch();
+      if (!event.isPrimary || event.button !== 0) return;
+      if (event.target instanceof Element && event.target.closest(CONTROL)) {
+        return;
+      }
+      touches.tap(event.clientX, event.clientY, now());
+      wake();
+    }
+    function onPointerMove(event: PointerEvent) {
+      touch();
+      // A finger is not a hand passing over the page; only a mouse leaves wakes.
+      if (event.pointerType !== "mouse") return;
+      if (touches.move(event.clientX, event.clientY, now())) wake();
+    }
+    const onPointerLeave = () => touches.leave();
+    // Back in front: a calm page wakes as if touched, a moving one carries on.
+    const onFront = () => {
+      if (!inFront()) return;
+      if (budget.calm) budget.touch();
+      wake();
+    };
+    window.addEventListener("pointerdown", onPointerDown);
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    document.addEventListener("pointerleave", onPointerLeave);
+    window.addEventListener("keydown", touch, { passive: true });
+    window.addEventListener("scroll", touch, { passive: true });
+    window.addEventListener("focus", onFront);
+    document.addEventListener("visibilitychange", onFront);
+    reduceMotion.addEventListener("change", wake);
+    wake();
+
+    return () => {
+      stopped = true;
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+      sizeWatch.disconnect();
+      schemeWatch.disconnect();
+      window.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("keydown", touch);
+      window.removeEventListener("scroll", touch);
+      window.removeEventListener("focus", onFront);
+      document.removeEventListener("visibilitychange", onFront);
+      reduceMotion.removeEventListener("change", wake);
+    };
+  }
+
+  class PaintBackground extends HTMLElement {
+    connectedCallback() {
+      const canvas = this.querySelector("canvas");
+      const gl = canvas?.getContext("webgl2", {
+        antialias: false,
+        alpha: false,
+        depth: false,
+        stencil: false,
+        premultipliedAlpha: false,
+        powerPreference: "low-power",
+        // A context the browser would have to emulate is not worth having.
+        failIfMajorPerformanceCaveat: true,
+      });
+      // No WebGL2: the canvas stays blank and the page background shows.
+      if (!canvas || !gl) return;
+      // The same on a software renderer, where even the cheap passes would
+      // stall the page: headless browsers, a machine with no GPU, or GPU
+      // acceleration switched off.
+      if (SOFTWARE_RENDERER.test(renderer(gl))) return;
+
+      // The browser can take the GPU away (a long background tab, a driver
+      // reset) and give it back; everything is rebuilt when it does.
+      let stop = start(canvas, gl);
+      canvas.addEventListener("webglcontextlost", (event) => {
+        event.preventDefault(); // without this the browser never restores it
+        stop();
+      });
+      canvas.addEventListener("webglcontextrestored", () => {
+        stop = start(canvas, gl);
+      });
+    }
+  }
+
+  customElements.define("paint-background", PaintBackground);
+</script>

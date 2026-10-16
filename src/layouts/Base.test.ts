@@ -1,4 +1,6 @@
+import { getContainerRenderer as react } from "@astrojs/react/container-renderer";
 import { experimental_AstroContainer as AstroContainer } from "astro/container";
+import { loadRenderers } from "astro:container";
 import { beforeAll, describe, expect, it } from "vitest";
 import Base from "./Base.astro";
 import { SITE_URL } from "../lib/site";
@@ -6,7 +8,10 @@ import { SITE_URL } from "../lib/site";
 let container: AstroContainer;
 
 beforeAll(async () => {
-  container = await AstroContainer.create();
+  // The header mounts a React island (MobileNav), so the container needs the
+  // React renderer to produce the page.
+  const renderers = await loadRenderers([react()]);
+  container = await AstroContainer.create({ renderers });
 });
 
 /**

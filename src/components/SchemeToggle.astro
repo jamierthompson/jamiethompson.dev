@@ -73,7 +73,13 @@ const MODES = [
           // Unstorable: the choice still applies for this page view.
         }
         apply(scheme);
-        this.render(scheme);
+        // The header renders one toggle inline and one in the drawer; whichever
+        // was clicked, both have to show the choice.
+        for (const toggle of document.querySelectorAll<SchemeToggle>(
+          "scheme-toggle",
+        )) {
+          toggle.render(scheme);
+        }
       });
     }
 

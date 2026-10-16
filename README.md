@@ -87,7 +87,7 @@ src/
   components/       # shared components
   content/          # projects and writing (the content)
   content.config.ts # the collection schemas
-  layouts/          # the page shell — head tags, scheme toggle, tokens
+  layouts/          # Base.astro and Entry.astro
   lib/              # build-time helpers, tests beside them
   pages/            # routes
   styles/           # global.css — Tailwind entry and design tokens

@@ -231,6 +231,34 @@ a[data-external]::after {
   :where(code)::after {
     content: none;
   }
+
+  :where(img, video) {
+    border-radius: var(--radius-xl);
+  }
+}
+
+/*
+ * Bleed
+ * -----
+ * On an entry page, pictures and code blocks run wider than the text column
+ * on each side, so a figure reads as a figure and not as another paragraph.
+ * Opt-in (`prose-bleed`) because it needs room on both sides that the home
+ * and index columns don't have; `--bleed` is 0 until the viewport has it.
+ */
+.prose-bleed {
+  --bleed: 0px;
+
+  :where(p > img:only-child, figure, video, pre) {
+    margin-inline: calc(-1 * var(--bleed));
+    width: calc(100% + 2 * var(--bleed));
+    max-width: none;
+  }
+}
+
+@media (width >= 80rem) {
+  .prose-bleed {
+    --bleed: 3.5rem;
+  }
 }
 
 /*

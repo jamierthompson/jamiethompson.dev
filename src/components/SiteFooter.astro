@@ -1,0 +1,29 @@
+---
+import ExternalLink from "./ExternalLink.astro";
+import { CONTACT, SITE_NAME } from "../lib/site";
+
+/**
+ * One quiet line: the copyright on the left, the contact links on the right.
+ * On a narrow screen the two stack. The sections are the header's job, so
+ * they are not repeated here.
+ */
+const year = new Date().getUTCFullYear();
+---
+
+<footer class="mt-24 flex flex-col gap-y-3 border-t px-6 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+  <p>
+    © {year} {SITE_NAME}
+  </p>
+  <ul class="flex flex-wrap gap-x-5 gap-y-2">
+    {CONTACT.map(({ href, label }) => (
+      <li>
+        <ExternalLink
+          href={href}
+          class="transition-colors hover:text-foreground"
+        >
+          {label}
+        </ExternalLink>
+      </li>
+    ))}
+  </ul>
+</footer>

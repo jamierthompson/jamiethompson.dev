@@ -1,0 +1,56 @@
+---
+import { MobileNav } from "./MobileNav";
+import SchemeToggle from "./SchemeToggle.astro";
+import { NAV, SITE_NAME } from "../lib/site";
+
+/**
+ * The site's navigation: name on the left, section links in the middle, the
+ * scheme toggle on the right, across the full width of the screen. Below
+ * `md` the links and the toggle move into the sheet behind `MobileNav`'s
+ * menu button — a React island.
+ */
+const path = Astro.url.pathname;
+
+/** A section link is current on its index and on every page under it. */
+const isCurrent = (href: string) => path === href || path.startsWith(href);
+
+const link =
+  "rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground";
+---
+
+<header class="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
+  <div class="relative flex h-14 items-center justify-between px-6">
+    <a href="/" class="font-medium tracking-tight">
+      {SITE_NAME}
+    </a>
+
+    <nav
+      aria-label="Site"
+      class="absolute left-1/2 hidden -translate-x-1/2 md:block"
+    >
+      <ul class="flex items-center gap-1">
+        {NAV.map(({ href, label }) => (
+          <li>
+            <a
+              href={href}
+              class={link}
+              aria-current={isCurrent(href) ? "page" : undefined}
+            >
+              {label}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+
+    <div class="hidden md:block">
+      <SchemeToggle />
+    </div>
+
+    <div class="md:hidden">
+      <MobileNav client:load currentPath={path}>
+        <SchemeToggle />
+      </MobileNav>
+    </div>
+  </div>
+</header>

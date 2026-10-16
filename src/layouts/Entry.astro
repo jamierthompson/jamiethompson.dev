@@ -1,0 +1,50 @@
+---
+import ArrowLeft from "@lucide/astro/icons/arrow-left";
+import Backlinks from "../components/Backlinks.astro";
+import { SITE_NAME } from "../lib/site";
+import type { Backlink } from "../lib/wikilinks";
+import Base from "./Base.astro";
+
+/**
+ * The page for one entry of either collection: a centered title with the
+ * `meta` slot under it, and the content in a text column. The way back to
+ * the index is the header nav; under `md`, where the nav is behind a button,
+ * a back link stands in for it.
+ */
+interface Props {
+  title: string;
+  description: string;
+  backlinks: Backlink[];
+  /** The index this entry belongs to, for the back link. */
+  back: { href: string; label: string };
+}
+
+const { title, description, backlinks, back } = Astro.props;
+---
+
+<Base title={`${title} — ${SITE_NAME}`} description={description}>
+  <div class="mx-auto w-full max-w-2xl">
+    <a
+      href={back.href}
+      class="enter mb-6 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:hidden"
+    >
+      <ArrowLeft aria-hidden="true" class="size-4" />
+      {back.label}
+    </a>
+
+    <article>
+      <header class="enter text-center" style="--stagger: 1">
+        <h1 class="text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+          {title}
+        </h1>
+        <slot name="meta" />
+      </header>
+
+      <div class="enter prose prose-bleed mt-10" style="--stagger: 2">
+        <slot />
+      </div>
+    </article>
+
+    <Backlinks backlinks={backlinks} />
+  </div>
+</Base>

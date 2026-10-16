@@ -1,14 +1,14 @@
 ---
 import type { GetStaticPaths } from "astro";
-import { getCollection, render } from "astro:content";
-import Base from "../../layouts/Base.astro";
-import BackLink from "../../components/BackLink.astro";
-import Backlinks from "../../components/Backlinks.astro";
+import { Image } from "astro:assets";
+import { render } from "astro:content";
+import Entry from "../../layouts/Entry.astro";
+import { published } from "../../lib/collections";
 import { formatDate } from "../../lib/formatDate";
 import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
-  const posts = await getCollection("writing", ({ data }) => !data.draft);
+  const posts = await published("writing");
   return posts.map((post) => ({
     params: { slug: post.id },
     props: { post },
@@ -18,27 +18,29 @@ export const getStaticPaths = (async () => {
 const { post } = Astro.props;
 const { Content } = await render(post);
 const backlinks = await getBacklinks("writing", post.id);
+const { title, description, category, pubDate, cover } = post.data;
 ---
 
-<Base
-  title={`${post.data.title} — Jamie Thompson`}
-  description={post.data.description}
+<Entry
+  title={title}
+  description={description}
+  backlinks={backlinks}
+  back={{ href: "/writing/", label: "Writing" }}
 >
-  <BackLink />
-  <article>
-    <header class="enter" style="--stagger: 1">
-      <h1 class="font-medium">{post.data.title}</h1>
-      <p class="text-muted-foreground">
-        {post.data.category} ·{" "}
-        <time datetime={post.data.pubDate.toISOString()}>
-          {formatDate(post.data.pubDate)}
-        </time>
-      </p>
-    </header>
-    <div class="enter prose mt-8" style="--stagger: 2">
-      <Content />
-    </div>
-  </article>
-
-  <Backlinks backlinks={backlinks} />
-</Base>
+  <Fragment slot="meta">
+    <p class="mt-4 flex justify-center gap-4 text-muted-foreground">
+      <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+      <span>{category}</span>
+    </p>
+    {cover && (
+      <Image
+        src={cover.src}
+        alt={cover.alt}
+        widths={[720, 1440]}
+        sizes="(min-width: 42rem) 42rem, 100vw"
+        class="mt-10 w-full rounded-2xl border"
+      />
+    )}
+  </Fragment>
+  <Content />
+</Entry>

@@ -1,15 +1,15 @@
 ---
 import type { GetStaticPaths } from "astro";
-import { getCollection, render } from "astro:content";
-import Base from "../../layouts/Base.astro";
-import BackLink from "../../components/BackLink.astro";
-import Backlinks from "../../components/Backlinks.astro";
+import { Image } from "astro:assets";
+import { render } from "astro:content";
 import ExternalLink from "../../components/ExternalLink.astro";
-import { initial } from "../../lib/initial";
+import Entry from "../../layouts/Entry.astro";
+import { published } from "../../lib/collections";
+import { formatDate } from "../../lib/formatDate";
 import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
-  const projects = await getCollection("projects", ({ data }) => !data.draft);
+  const projects = await published("projects");
   return projects.map((project) => ({
     params: { slug: project.id },
     props: { project },
@@ -19,41 +19,40 @@ export const getStaticPaths = (async () => {
 const { project } = Astro.props;
 const { Content } = await render(project);
 const backlinks = await getBacklinks("projects", project.id);
-const { url } = project.data;
+const { title, description, category, pubDate, url, cover } = project.data;
 ---
 
-<Base
-  title={`${project.data.title} — Jamie Thompson`}
-  description={project.data.description}
+<Entry
+  title={title}
+  description={description}
+  backlinks={backlinks}
+  back={{ href: "/projects/", label: "Projects" }}
 >
-  <BackLink />
-  <article>
-    <header class="enter flex items-center gap-4" style="--stagger: 1">
-      <span
-        aria-hidden="true"
-        class="grid size-12 shrink-0 place-items-center rounded-xl border bg-card font-mono text-muted-foreground shadow-xs"
-      >
-        {initial(project.data.title)}
-      </span>
-      <div class="min-w-0">
-        <h1 class="font-medium">{project.data.title}</h1>
-        <p class="text-muted-foreground">{project.data.description}</p>
-      </div>
-    </header>
+  <Fragment slot="meta">
+    <p class="mt-4 text-muted-foreground">{description}</p>
+    <p class="mt-2 flex justify-center gap-4 text-sm text-muted-foreground">
+      <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
+      <span>{category}</span>
+    </p>
     {url && (
-      <p class="enter mt-6" style="--stagger: 2">
+      <p class="mt-3">
         <ExternalLink
           href={url}
-          class="text-muted-foreground underline decoration-border underline-offset-[3px] transition-colors hover:text-foreground"
+          class="text-sm text-muted-foreground underline decoration-border underline-offset-[3px] transition-colors hover:text-foreground"
         >
           {new URL(url).host}
         </ExternalLink>
       </p>
     )}
-    <div class="enter prose mt-8" style="--stagger: 3">
-      <Content />
-    </div>
-  </article>
-
-  <Backlinks backlinks={backlinks} />
-</Base>
+    {cover && (
+      <Image
+        src={cover.src}
+        alt={cover.alt}
+        widths={[720, 1440]}
+        sizes="(min-width: 42rem) 42rem, 100vw"
+        class="mt-10 w-full rounded-2xl border"
+      />
+    )}
+  </Fragment>
+  <Content />
+</Entry>

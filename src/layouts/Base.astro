@@ -1,6 +1,7 @@
 ---
 import { Font } from "astro:assets";
-import SchemeToggle from "../components/SchemeToggle.astro";
+import SiteFooter from "../components/SiteFooter.astro";
+import SiteHeader from "../components/SiteHeader.astro";
 import { SITE_NAME, SITE_URL } from "../lib/site";
 import "../styles/global.css";
 
@@ -108,15 +109,18 @@ const TWITTER_CARD = "summary";
     </script>
   </head>
   <body class="flex min-h-svh flex-col">
-    <header>
-      <div class="flex w-full items-center justify-end px-4 py-4">
-        <SchemeToggle />
-      </div>
-    </header>
-    <main class="mx-auto w-full max-w-6xl flex-1 px-4 pt-8 pb-16">
-      <div class="max-w-[65ch]">
-        <slot />
-      </div>
+    {/* The header is sticky, so a keyboard user would otherwise tab through
+        it on every page before reaching anything. */}
+    <a
+      href="#main"
+      class="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-md focus:bg-background focus:px-3 focus:py-2 focus:text-sm"
+    >
+      Skip to content
+    </a>
+    <SiteHeader />
+    <main id="main" class="mx-auto w-full max-w-6xl flex-1 px-4 pt-10 pb-16">
+      <slot />
     </main>
+    <SiteFooter />
   </body>
 </html>

@@ -1,5 +1,5 @@
 import { readdirSync } from "node:fs";
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 import { isExternalHref } from "../src/lib/externalLink";
 
 /**
@@ -592,7 +592,7 @@ test.describe("focus and the keyboard path", () => {
 });
 
 test.describe("target size", () => {
-  test("the header's toggle and an entry's back button clear the minimum target size", async ({
+  test("the header's controls, the drawer's, and an entry's back link clear the minimum target size", async ({
     page,
   }) => {
     // The inline exception covers links inside a sentence; these controls sit
@@ -600,25 +600,39 @@ test.describe("target size", () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/writing/fixture-essay/");
 
-    const controls = page.locator(
-      'header button, a[href="/"][aria-label="Home"]',
-    );
-    await expect(controls).toHaveCount(4);
-    const small = await controls.evaluateAll(
-      (elements, floor) =>
-        elements
-          .map((element) => ({
-            name:
-              element.getAttribute("aria-label") ??
-              (element.textContent ?? "").trim(),
-            rect: element.getBoundingClientRect(),
-          }))
-          .filter(({ rect }) => rect.width < floor || rect.height < floor)
-          .map(({ name, rect }) => `${name}: ${rect.width}×${rect.height}`),
-      TARGET_SIZE_FLOOR,
-    );
+    const small = (locator: Locator) =>
+      locator.evaluateAll(
+        (elements, floor) =>
+          elements
+            .map((element) => ({
+              name:
+                element.getAttribute("aria-label") ??
+                (element.textContent ?? "").trim(),
+              rect: element.getBoundingClientRect(),
+            }))
+            .filter(({ rect }) => rect.width < floor || rect.height < floor)
+            .map(({ name, rect }) => `${name}: ${rect.width}×${rect.height}`),
+        TARGET_SIZE_FLOOR,
+      );
 
-    expect(small).toEqual([]);
+    // With the drawer shut: the menu button and the way back to the index.
+    const shut = page.locator(
+      'header button[aria-label="Open navigation"], main a[href="/writing/"]',
+    );
+    await expect(shut).toHaveCount(2);
+    expect(await small(shut)).toEqual([]);
+
+    // With it open: its close button and the three scheme buttons.
+    // The menu button is a React island; a click before it hydrates is lost.
+    await page.waitForFunction(() =>
+      [...document.querySelectorAll("astro-island")].every(
+        (island) => !island.hasAttribute("ssr"),
+      ),
+    );
+    await page.getByRole("button", { name: "Open navigation" }).click();
+    const open = page.locator('[role="dialog"] button');
+    await expect(open).toHaveCount(4);
+    expect(await small(open)).toEqual([]);
   });
 });
 

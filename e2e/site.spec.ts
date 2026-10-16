@@ -65,13 +65,34 @@ test("the home page lists both collections, and each entry opens", async ({
   }
 });
 
-test("an entry's back button returns home", async ({ page }) => {
+test("below the nav breakpoint, an entry's back link returns to its index", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/writing/fixture-essay/");
-  await page.getByRole("link", { name: "Home" }).click();
-  await expect(page).toHaveURL(/\/$/);
+  // Scoped to main: the header carries a "Writing" link of its own.
+  await page
+    .getByRole("main")
+    .getByRole("link", { name: "Writing", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/writing\/$/);
   await expect(
-    page.getByRole("heading", { level: 1, name: "Jamie Thompson" }),
+    page.getByRole("heading", { level: 1, name: "Writing" }),
   ).toBeVisible();
+});
+
+test("at desktop widths the header nav is the way back, and the back link is gone", async ({
+  page,
+}) => {
+  await page.goto("/writing/fixture-essay/");
+  await expect(
+    page.getByRole("main").getByRole("link", { name: "Writing", exact: true }),
+  ).toBeHidden();
+  await page
+    .getByRole("navigation", { name: "Site" })
+    .getByRole("link", { name: "Writing" })
+    .click();
+  await expect(page).toHaveURL(/\/writing\/$/);
 });
 
 test("a wikilink reaches a project, and the project lists the post as a backlink", async ({

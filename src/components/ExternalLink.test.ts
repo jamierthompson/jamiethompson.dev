@@ -97,7 +97,7 @@ describe("ExternalLink", () => {
       for (const href of [
         "/writing/x/",
         "#heading",
-        "https://jamiethompson.design/x/",
+        "https://jamiethompson.dev/x/",
         "",
       ]) {
         await expect(render({ href })).rejects.toThrow(/ExternalLink/);

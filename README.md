@@ -1,4 +1,4 @@
-# jamiethompson.design
+# jamiethompson.dev
 
 Projects and writing.
 Built with [Astro](https://astro.build).
@@ -77,10 +77,10 @@ Vercel's build-and-deploy check.
 
 ## Deploy
 
-Vercel project `jamiethompson.design`, connected to this
+Vercel project `jamiethompson.dev`, connected to this
 repo: every push to `main` deploys to production, every pull request gets a
-preview. The canonical host is `jamiethompson.design` — it is `SITE_URL` in
-`src/lib/site.ts` — and `www.jamiethompson.design`, `jamiethompsondesign.com`
+preview. The canonical host is `jamiethompson.dev` — it is `SITE_URL` in
+`src/lib/site.ts` — and `www.jamiethompson.dev`, `jamiethompson.design`, `www.jamiethompson.design`, `jamiethompsondesign.com`
 and `www.jamiethompsondesign.com` 308-redirect to it.
 
 ## Structure

@@ -1,0 +1,58 @@
+---
+title: "Components in MDX"
+description: "A showcase post in MDX: an Astro icon, a React island with state, and raw HTML in the prose."
+pubDate: 2026-10-22
+category: "Showcase"
+---
+
+import { Sparkles } from "@lucide/astro";
+import { Button } from "../../components/ui/button";
+
+A `.mdx` entry takes the same frontmatter as a `.md` one and renders through
+the same layout, so [[everything-a-post-can-show|the plain-markdown showcase]]
+covers most of what this page can do. What MDX adds is imports.
+
+## An Astro component
+
+An icon from `@lucide/astro` renders inline with the text
+
+<Sparkles size={16} class="inline" aria-hidden="true" /> and ships as plain SVG,
+no JavaScript.
+
+## A React island
+
+The shadcn `Button` below is a React component. Without a `client:` directive
+it renders to static HTML:
+
+<p>
+  <Button variant="outline">Static button</Button>
+</p>
+
+With `client:load` it hydrates, and a click handler runs in the browser:
+
+<p>
+  <Button
+    client:load
+    onClick={() => alert("Hydrated. The island is interactive.")}
+  >
+    Click me
+  </Button>
+</p>
+
+This is the only entry that ships any JavaScript for its content. A real post
+would only do this when it needs state.
+
+## Raw HTML
+
+MDX also allows raw elements where markdown has no syntax:
+
+<details>
+  <summary>A collapsed section</summary>
+
+Markdown still works inside it: **bold**, `code`, and a link to
+[[this-site]].
+
+</details>
+
+<kbd>⌘</kbd> + <kbd>K</kbd> is a `<kbd>` element, and <mark>this</mark> is a
+`<mark>`.

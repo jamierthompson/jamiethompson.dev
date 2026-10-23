@@ -19,7 +19,8 @@ export const getStaticPaths = (async () => {
 const { project } = Astro.props;
 const { Content, headings } = await render(project);
 const backlinks = await getBacklinks("projects", project.id);
-const { title, description, category, pubDate, url, cover } = project.data;
+const { title, description, category, pubDate, updated, url, cover } =
+  project.data;
 ---
 
 <Entry
@@ -34,6 +35,12 @@ const { title, description, category, pubDate, url, cover } = project.data;
     <p class="mt-2 flex justify-center gap-4 text-sm text-muted-foreground">
       <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
       <span>{category}</span>
+      {updated && (
+        <span>
+          Updated{" "}
+          <time datetime={updated.toISOString()}>{formatDate(updated)}</time>
+        </span>
+      )}
     </p>
     {url && (
       <p class="mt-3">

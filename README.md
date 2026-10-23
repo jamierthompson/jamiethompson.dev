@@ -11,7 +11,9 @@ Built with [Astro](https://astro.build).
 - **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
   Both require a `category` (what the index pages filter by) and take an optional `cover`
   (`src` + `alt`), shown on the card and at the top of the page; projects also take an
-  optional `url` to the shipped project
+  optional `url` to the shipped project. Image files live in `src/assets/` and are
+  referenced by relative path, so Astro resizes and converts them at build time (that
+  needs `sharp`, a dependency of this project)
 - **Featured content** — `src/content/featured.yaml` lists, in order, which projects and
   posts the home page shows. The build fails on a slug that doesn't exist, is a draft, or
   is listed twice

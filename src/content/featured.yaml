@@ -3,7 +3,10 @@
 # fails on a slug that doesn't exist or is a draft.
 home:
   projects:
+    - showcase-project
     - this-site
   writing:
+    - everything-a-post-can-show
+    - components-in-mdx
     - hello-world
     - on-writing-in-public

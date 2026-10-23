@@ -204,8 +204,8 @@ describe("Base", () => {
 
   describe("the card", () => {
     it("claims the summary card, having no image for a larger one", async () => {
-      // No `og:image` exists yet (issue #5), and `summary_large_image` without
-      // one renders as a blank panel.
+      // The site has image assets, but no `og:image` yet, and
+      // `summary_large_image` without one renders as a blank panel.
       const html = await render({ title: "Jamie Thompson" }, "/");
       expect(contentOf(html, "twitter:card")).toBe("summary");
       expect(html).not.toContain("og:image");

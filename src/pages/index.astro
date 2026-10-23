@@ -15,8 +15,8 @@ const { projects, writing } = await getFeatured();
   description="Design engineer. Projects, and writing about the things I build."
 >
   <header class="enter flex items-center gap-3">
-    {/* Initials until there's a photo: drop one in public/ and swap this for
-        an <img>, keeping the size and the rounding. */}
+    {/* Initials until there's a photo: put one in src/assets/ and swap this
+        for an <Image> from astro:assets, keeping the size and the rounding. */}
     <span
       aria-hidden="true"
       class="grid size-10 shrink-0 place-items-center rounded-full bg-foreground font-mono text-xs font-medium tracking-tight text-background"

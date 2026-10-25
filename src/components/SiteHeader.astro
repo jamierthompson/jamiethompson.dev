@@ -5,7 +5,8 @@ import { NAV, SITE_NAME } from "../lib/site";
 
 /**
  * The site's navigation: name on the left, section links in the middle, the
- * scheme toggle on the right, across the full width of the screen. Below
+ * scheme toggle on the right, within the page width; the bar and its border
+ * run the full width of the screen. Below
  * `md` the links and the toggle move into the sheet behind `MobileNav`'s
  * menu button — a React island.
  */
@@ -19,7 +20,7 @@ const link =
 ---
 
 <header class="sticky top-0 z-40 border-b bg-background/80 backdrop-blur-md">
-  <div class="relative flex h-14 items-center justify-between px-6">
+  <div class="relative mx-auto flex h-14 w-full max-w-page items-center justify-between px-gutter">
     <a href="/" class="font-medium tracking-tight">
       {SITE_NAME}
     </a>

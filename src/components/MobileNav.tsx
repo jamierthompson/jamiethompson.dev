@@ -57,7 +57,7 @@ export function MobileNav({ currentPath, children }: Props) {
         className="w-full gap-0 border-l-0 shadow-none sm:max-w-none"
       >
         <SheetTitle className="sr-only">Navigation</SheetTitle>
-        <div className="flex h-14 items-center justify-between border-b px-6">
+        <div className="flex h-14 items-center justify-between border-b px-gutter">
           <a href="/" className="font-medium tracking-tight">
             {SITE_NAME}
           </a>
@@ -68,7 +68,7 @@ export function MobileNav({ currentPath, children }: Props) {
           </SheetClose>
         </div>
 
-        <nav aria-label="Site" className="px-6 pt-6">
+        <nav aria-label="Site" className="px-gutter pt-6">
           <ul>
             {NAV.map(({ href, label }) => (
               <li key={href}>
@@ -86,7 +86,7 @@ export function MobileNav({ currentPath, children }: Props) {
           </ul>
         </nav>
 
-        <div className="mt-auto border-t px-6 py-5">{children}</div>
+        <div className="mt-auto border-t px-gutter py-5">{children}</div>
       </SheetContent>
     </Sheet>
   );

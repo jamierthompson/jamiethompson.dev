@@ -51,6 +51,18 @@
   --radius-xl: calc(var(--radius) * 1.4);
 }
 
+/*
+ * Layout
+ * ------
+ * One page width and one gutter, shared by the header, <main> and the footer
+ * so their edges line up at every viewport. They generate `max-w-page` and
+ * `px-gutter` (and `-mx-gutter`, for a row that scrolls edge to edge).
+ */
+@theme {
+  --container-page: 72rem;
+  --spacing-gutter: 1.5rem;
+}
+
 :root {
   color-scheme: light;
   --background: oklch(1 0 0);

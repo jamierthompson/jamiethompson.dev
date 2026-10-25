@@ -593,8 +593,12 @@
       budget.touch();
       wake();
     };
+    // Taps and wakes are motion too, so for anyone who asked for less the
+    // hand leaves nothing behind. One already under way when the setting
+    // changes plays out rather than freezing mid-ripple.
     function onPointerDown(event: PointerEvent) {
       touch();
+      if (reduceMotion.matches) return;
       if (!event.isPrimary || event.button !== 0) return;
       if (event.target instanceof Element && event.target.closest(CONTROL)) {
         return;
@@ -605,7 +609,7 @@
     function onPointerMove(event: PointerEvent) {
       touch();
       // A finger is not a hand passing over the page; only a mouse leaves wakes.
-      if (event.pointerType !== "mouse") return;
+      if (reduceMotion.matches || event.pointerType !== "mouse") return;
       if (touches.move(event.clientX, event.clientY, now())) wake();
     }
     const onPointerLeave = () => touches.leave();

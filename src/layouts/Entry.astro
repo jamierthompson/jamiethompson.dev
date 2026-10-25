@@ -65,21 +65,23 @@ const toc = buildToc(headings);
         </header>
 
         {toc.length > 0 && (
-          <details
-            class="group enter mt-10 border-y xl:hidden"
-            style="--stagger: 2"
-          >
-            <summary class="flex cursor-pointer list-none items-center justify-between py-3 font-medium [&::-webkit-details-marker]:hidden">
-              Table of Contents
-              <ChevronDown
-                aria-hidden="true"
-                class="size-4 text-muted-foreground transition-transform group-open:rotate-180"
-              />
-            </summary>
-            <nav aria-label="Table of Contents" class="pb-3">
-              <TableOfContents toc={toc} />
-            </nav>
-          </details>
+          <toc-disclosure class="block">
+            <details
+              class="group enter mt-10 border-y xl:hidden"
+              style="--stagger: 2"
+            >
+              <summary class="flex cursor-pointer list-none items-center justify-between py-3 font-medium [&::-webkit-details-marker]:hidden">
+                Table of Contents
+                <ChevronDown
+                  aria-hidden="true"
+                  class="size-4 text-muted-foreground transition-transform group-open:rotate-180"
+                />
+              </summary>
+              <nav aria-label="Table of Contents" class="pb-3">
+                <TableOfContents toc={toc} />
+              </nav>
+            </details>
+          </toc-disclosure>
         )}
 
         <div class="enter prose prose-bleed mt-10" style="--stagger: 3">
@@ -144,4 +146,25 @@ const toc = buildToc(headings);
   }
 
   customElements.define("table-of-contents", TableOfContentsRail);
+
+  /**
+   * Folds the collapsible contents away once a link in it is chosen. Left
+   * open, it stays above the article and the reader lands on a heading with
+   * the list still in the way. It closes in the click handler, before the
+   * browser follows the link, so the scroll to the heading is measured
+   * against the page without the open list in it and still lands on target.
+   */
+  class TableOfContentsDisclosure extends HTMLElement {
+    connectedCallback() {
+      const details = this.querySelector("details");
+      if (!details) return;
+      details.addEventListener("click", (event) => {
+        if ((event.target as Element).closest("a[href^='#']")) {
+          details.open = false;
+        }
+      });
+    }
+  }
+
+  customElements.define("toc-disclosure", TableOfContentsDisclosure);
 </script>

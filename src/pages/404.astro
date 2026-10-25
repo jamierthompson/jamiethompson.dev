@@ -1,0 +1,36 @@
+---
+import Base from "../layouts/Base.astro";
+import { SITE_NAME } from "../lib/site";
+
+/** Where a lost reader most likely meant to go: the sections the header names. */
+const links = [
+  { href: "/", label: "Home" },
+  { href: "/writing/", label: "Writing" },
+  { href: "/projects/", label: "Projects" },
+];
+---
+
+<Base
+  title={`Not found — ${SITE_NAME}`}
+  description="There's no page at this address."
+>
+  <h1 class="enter text-3xl font-medium tracking-tight sm:text-4xl">
+    Not found
+  </h1>
+  <p class="enter mt-4 text-muted-foreground" style="--stagger: 1">
+    There's no page at this address. It may have moved, or the link may be
+    mistyped.
+  </p>
+  <ul class="enter mt-8 flex flex-wrap gap-x-6 gap-y-2" style="--stagger: 2">
+    {links.map((link) => (
+      <li>
+        <a
+          href={link.href}
+          class="font-medium underline decoration-border underline-offset-[3px] transition-colors hover:decoration-foreground"
+        >
+          {link.label}
+        </a>
+      </li>
+    ))}
+  </ul>
+</Base>

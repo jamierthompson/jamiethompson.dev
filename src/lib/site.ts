@@ -20,3 +20,17 @@ export const CONTACT = [
   },
   { href: "mailto:hello@jamiethompson.design", label: "Email" },
 ] as const;
+
+/**
+ * Whether the nav link `href` is the section `path` is in: its index or any
+ * page under it. Compared by whole path segment, so the answer does not hang
+ * on how either side spells its trailing slash — `/writing` is in the section
+ * `/writing/` (Astro's default `trailingSlash: "ignore"` serves both), and
+ * `/writing-x/` is not in `/writing`. The root only matches itself, or it
+ * would claim every page.
+ */
+export function isCurrentSection(path: string, href: string): boolean {
+  const section = href.replace(/\/+$/, "");
+  if (section === "") return path === "/";
+  return path === section || path.startsWith(`${section}/`);
+}

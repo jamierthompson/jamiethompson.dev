@@ -8,7 +8,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { NAV, SITE_NAME } from "@/lib/site";
+import { NAV, SITE_NAME, isCurrentSection } from "@/lib/site";
 
 /**
  * The navigation below `md`: a menu button that opens a full-screen sheet
@@ -24,10 +24,6 @@ interface Props {
 
 /** Tailwind's `md` breakpoint, where the inline nav takes over. */
 const INLINE_NAV = "(min-width: 48rem)";
-
-/** A section link is current on its index and on every page under it. */
-const isCurrent = (path: string, href: string) =>
-  path === href || path.startsWith(href);
 
 export function MobileNav({ currentPath, children }: Props) {
   const [open, setOpen] = useState(false);
@@ -75,7 +71,7 @@ export function MobileNav({ currentPath, children }: Props) {
                 <a
                   href={href}
                   aria-current={
-                    isCurrent(currentPath, href) ? "page" : undefined
+                    isCurrentSection(currentPath, href) ? "page" : undefined
                   }
                   className="block py-3 text-3xl font-medium tracking-tight text-muted-foreground transition-colors hover:text-foreground aria-[current=page]:text-foreground"
                 >

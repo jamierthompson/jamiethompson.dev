@@ -22,43 +22,51 @@ const tab =
   "shrink-0 rounded-md px-3 py-1.5 text-left text-sm text-muted-foreground transition-colors hover:text-foreground aria-pressed:bg-muted aria-pressed:text-foreground";
 ---
 
-<category-filter
-  class="enter mt-10 block lg:grid lg:grid-cols-[12rem_minmax(0,42rem)] lg:gap-16"
-  style="--stagger: 1"
->
-  <div
-    role="group"
-    aria-label="Filter by category"
-    class="-mx-gutter flex gap-1 overflow-x-auto px-gutter lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:self-start lg:px-0"
+{/* An empty collection has nothing to filter, so it gets one line instead of
+    a lone "All" button over an empty list. */}
+{entries.length === 0 ? (
+  <p class="enter mt-10 text-muted-foreground" style="--stagger: 1">
+    Nothing here yet.
+  </p>
+) : (
+  <category-filter
+    class="enter mt-10 block lg:grid lg:grid-cols-[12rem_minmax(0,42rem)] lg:gap-16"
+    style="--stagger: 1"
   >
-    <button type="button" data-category="" aria-pressed="true" class={tab}>
-      All
-    </button>
-    {categories.map((category) => (
-      <button
-        type="button"
-        data-category={category}
-        aria-pressed="false"
-        class={tab}
-      >
-        {category}
+    <div
+      role="group"
+      aria-label="Filter by category"
+      class="-mx-gutter flex gap-1 overflow-x-auto px-gutter lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:self-start lg:px-0"
+    >
+      <button type="button" data-category="" aria-pressed="true" class={tab}>
+        All
       </button>
-    ))}
-  </div>
-
-  <div class="mt-6 lg:mt-0">
-    <ul>
-      {entries.map((entry) => (
-        <li data-category={entry.category}>
-          <EntryRow {...entry} />
-        </li>
+      {categories.map((category) => (
+        <button
+          type="button"
+          data-category={category}
+          aria-pressed="false"
+          class={tab}
+        >
+          {category}
+        </button>
       ))}
-    </ul>
-    <p data-empty hidden class="text-muted-foreground">
-      Nothing in this category yet.
-    </p>
-  </div>
-</category-filter>
+    </div>
+
+    <div class="mt-6 lg:mt-0">
+      <ul>
+        {entries.map((entry) => (
+          <li data-category={entry.category}>
+            <EntryRow {...entry} />
+          </li>
+        ))}
+      </ul>
+      <p data-empty hidden class="text-muted-foreground">
+        Nothing in this category yet.
+      </p>
+    </div>
+  </category-filter>
+)}
 
 <style>
   category-filter:not(:defined) [role="group"] {

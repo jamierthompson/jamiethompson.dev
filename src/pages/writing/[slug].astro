@@ -4,7 +4,7 @@ import { Image } from "astro:assets";
 import { render } from "astro:content";
 import Entry from "../../layouts/Entry.astro";
 import { published } from "../../lib/collections";
-import { formatDate } from "../../lib/formatDate";
+import { formatDate, isLaterDay } from "../../lib/formatDate";
 import { getBacklinks } from "../../lib/references";
 
 export const getStaticPaths = (async () => {
@@ -29,23 +29,27 @@ const { title, description, category, pubDate, updated, cover } = post.data;
   back={{ href: "/writing/", label: "Writing" }}
 >
   <Fragment slot="meta">
-    <p class="mt-4 flex justify-center gap-4 text-muted-foreground">
+    <p class="mt-4 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
       <time datetime={pubDate.toISOString()}>{formatDate(pubDate)}</time>
       <span>{category}</span>
-      {updated && (
+      {updated && isLaterDay(updated, pubDate) && (
         <span>
           Updated{" "}
           <time datetime={updated.toISOString()}>{formatDate(updated)}</time>
         </span>
       )}
     </p>
+    {/* The cover is the largest thing above the fold, so it is the LCP
+        element: `priority` loads it eagerly with `fetchpriority="high"`
+        instead of the lazy default. */}
     {cover && (
       <Image
         src={cover.src}
         alt={cover.alt}
         widths={[720, 1440]}
         sizes="(min-width: 42rem) 42rem, 100vw"
-        class="mt-10 w-full rounded-2xl border"
+        class="mt-10 w-full rounded-xl border"
+        priority
       />
     )}
   </Fragment>

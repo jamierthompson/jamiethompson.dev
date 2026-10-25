@@ -7,6 +7,10 @@ import type { CollectionEntry } from "astro:content";
  * the description, and the host it lives at. A project with
  * no cover simply starts at the title. The whole card is the
  * link.
+ *
+ * The card shares `rounded-xl` with the list rows, the largest radius the
+ * theme derives from `--radius`; the cover sits inside it one step smaller,
+ * so the two corners nest instead of running parallel.
  */
 interface Props {
   project: CollectionEntry<"projects">;
@@ -18,7 +22,7 @@ const { title, description, url, cover } = project.data;
 
 <a
   href={`/projects/${project.id}/`}
-  class="group flex h-full flex-col gap-5 rounded-2xl border bg-card p-5 shadow-xs transition-colors hover:bg-muted/50"
+  class="group flex h-full flex-col gap-5 rounded-xl border bg-card p-5 shadow-xs transition-colors hover:bg-muted/50"
 >
   {cover && (
     <Image
@@ -26,7 +30,7 @@ const { title, description, url, cover } = project.data;
       alt={cover.alt}
       widths={[480, 960]}
       sizes="(min-width: 64rem) 22rem, (min-width: 40rem) 50vw, 100vw"
-      class="aspect-[16/10] w-full rounded-xl border object-cover"
+      class="aspect-[16/10] w-full rounded-lg border object-cover"
     />
   )}
   <span class="flex flex-col gap-1">

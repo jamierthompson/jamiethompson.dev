@@ -21,3 +21,14 @@ export function formatShortDate(date: Date): string {
     timeZone: "UTC",
   });
 }
+
+/**
+ * Whether `later` falls on a later calendar day than `earlier`, read in UTC
+ * like the formatters above. An `updated` on the same day as `pubDate` would
+ * print the same date twice, so the comparison is by day, not by instant.
+ */
+export function isLaterDay(later: Date, earlier: Date): boolean {
+  const day = (date: Date) =>
+    Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+  return day(later) > day(earlier);
+}

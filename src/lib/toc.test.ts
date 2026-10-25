@@ -40,4 +40,13 @@ describe("buildToc", () => {
       { slug: "two", text: "Two", children: [] },
     ]);
   });
+
+  it("leaves out the hidden heading GFM adds above footnotes", () => {
+    expect(
+      buildToc([
+        h(2, "Two"),
+        { depth: 2, text: "Footnotes", slug: "footnote-label" },
+      ]),
+    ).toEqual([{ slug: "two", text: "Two", children: [] }]);
+  });
 });

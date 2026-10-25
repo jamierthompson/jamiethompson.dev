@@ -7,6 +7,7 @@ import sitemap from "@astrojs/sitemap";
 import tailwindcss from "@tailwindcss/vite";
 import { wikiLinkPlugin } from "remark-wiki-link";
 import { rehypeMarkExternalLinks } from "./src/lib/externalLink";
+import { rehypeScrollTables } from "./src/lib/tableScroll";
 import { CONTENT_DIR } from "./src/lib/contentDir";
 import { SITE_URL } from "./src/lib/site";
 import {
@@ -72,7 +73,15 @@ export default defineConfig({
       remarkPlugins: [
         [wikiLinkPlugin, { ...wikiLinkOptions, permalinks: existingEntryKeys }],
       ],
-      rehypePlugins: [rehypeMarkExternalLinks],
+      rehypePlugins: [rehypeMarkExternalLinks, rehypeScrollTables],
     }),
+    // Highlighting is cross-cutting, so it stays on `markdown` rather than the
+    // processor. `defaultColor: false` emits both themes as CSS variables and
+    // no inline color, so the "Code blocks" rules in src/styles/global.css
+    // can follow the `.dark` class without fighting inline styles.
+    shikiConfig: {
+      themes: { light: "github-light", dark: "github-dark" },
+      defaultColor: false,
+    },
   },
 });

@@ -212,6 +212,11 @@ a[data-external]::after {
   --tw-prose-td-borders: var(--border);
   font-size: 1rem;
   line-height: 1.65;
+  /* A URL or identifier longer than the column breaks instead of pushing the
+     page sideways on a phone. Not `anywhere`: that also shrinks min-content
+     sizes, so table columns and code chips would be crushed to break words
+     that fit. */
+  overflow-wrap: break-word;
 
   :where(h1, h2, h3, h4) {
     font-size: 1em;
@@ -268,6 +273,43 @@ a[data-external]::after {
   :where(img, video) {
     border-radius: var(--radius-xl);
   }
+
+  /* A table wider than the column scrolls inside the box
+     `rehypeScrollTables` (src/lib/tableScroll.ts) wraps it in, rather than
+     widening the page. The table keeps its own display, so it stays a table
+     to a screen reader and still fills the column when it fits. The box
+     takes the table's vertical margins so the spacing is unchanged. */
+  :where(.table-scroll) {
+    overflow-x: auto;
+    margin-block: 2em;
+
+    > table {
+      margin-block: 0;
+    }
+  }
+
+  /* GFM task lists: the checkbox stands in for the bullet, hung in the
+     gutter so a wrapped line lines up with the text, not under the box. */
+  :where(ul.contains-task-list) {
+    list-style: none;
+    padding-inline-start: 0;
+  }
+
+  :where(.task-list-item) {
+    position: relative;
+    padding-inline-start: 1.5em;
+  }
+
+  :where(.task-list-item > input[type="checkbox"]) {
+    position: absolute;
+    inset-inline-start: 0;
+    /* Centered on the first line box, whatever the line height. */
+    top: calc(0.5lh - 0.5em);
+    width: 1em;
+    height: 1em;
+    margin: 0;
+    accent-color: var(--foreground);
+  }
 }
 
 /*
@@ -292,6 +334,34 @@ a[data-external]::after {
   .prose-bleed {
     --bleed: 3.5rem;
   }
+}
+
+/*
+ * Code blocks
+ * -----------
+ * Shiki writes both themes (github-light, github-dark) onto every token as
+ * --shiki-light / --shiki-dark, with no inline color (`defaultColor: false`
+ * in astro.config.ts), so the `.dark` class picks the theme here like every
+ * other color on the site, with no !important to beat inline styles.
+ *
+ * The block's background is deliberately not Shiki's: the themes' #fff and
+ * blue-gray #24292e sit off the neutral palette, so `pre` keeps the prose
+ * plugin's --tw-prose-pre-bg (--muted), the same tint as the inline chips.
+ */
+.astro-code,
+.astro-code span {
+  color: var(--shiki-light);
+  font-style: var(--shiki-light-font-style);
+  font-weight: var(--shiki-light-font-weight);
+  text-decoration: var(--shiki-light-text-decoration);
+}
+
+.dark .astro-code,
+.dark .astro-code span {
+  color: var(--shiki-dark);
+  font-style: var(--shiki-dark-font-style);
+  font-weight: var(--shiki-dark-font-weight);
+  text-decoration: var(--shiki-dark-text-decoration);
 }
 
 /*

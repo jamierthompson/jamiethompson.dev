@@ -212,6 +212,36 @@ describe("Base", () => {
     });
   });
 
+  describe("the browser chrome and home-screen icon", () => {
+    /**
+     * The scheme is a class the reader can pin against the OS, so a pair of
+     * `media`-keyed tags would follow the OS and contradict the toggle. One
+     * tag ships, on the light background: that is the page without
+     * JavaScript, and the inline script moves it with the `dark` class.
+     */
+    it("ships one theme-color, on the light background, with no media query", async () => {
+      const html = await render({ title: "Jamie Thompson" }, "/");
+      const tags = html.match(/<meta name="theme-color"[^>]*>/g) ?? [];
+
+      expect(tags).toHaveLength(1);
+      expect(tags[0]).not.toContain("media=");
+      expect(contentOf(html, "theme-color")).toBe("#ffffff");
+    });
+
+    it("hands the inline script both scheme colours", async () => {
+      const html = await render({ title: "Jamie Thompson" }, "/");
+      expect(html).toContain('"light":"#ffffff"');
+      expect(html).toContain('"dark":"#0a0a0a"');
+    });
+
+    it("links the PNG apple-touch-icon iOS uses in place of the SVG", async () => {
+      const html = await render({ title: "Jamie Thompson" }, "/");
+      expect(html).toMatch(
+        /<link rel="apple-touch-icon" href="\/apple-touch-icon\.png"/,
+      );
+    });
+  });
+
   describe("escaping", () => {
     it("escapes a quote in the title instead of opening a new attribute", async () => {
       const html = await render({ title: 'A "quoted" title — Jamie Thompson' });

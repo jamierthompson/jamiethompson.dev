@@ -71,6 +71,14 @@ const OG_TYPE = "website";
  * blank panel, which is worse than the small card the crawler falls back to.
  */
 const TWITTER_CARD = "summary";
+
+/**
+ * The browser chrome's color for each scheme: `--background` in
+ * `src/styles/global.css`, oklch(1 0 0) and oklch(0.145 0 0), converted to
+ * sRGB hex because older engines that read `theme-color` do not parse oklch.
+ * The inline script picks between them, so they reach it through `define:vars`.
+ */
+const THEME_COLOR = { light: "#ffffff", dark: "#0a0a0a" };
 ---
 
 <!doctype html>
@@ -79,6 +87,9 @@ const TWITTER_CARD = "summary";
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    {/* iOS ignores SVG icons and draws transparency as black, so the home
+        screen gets an opaque PNG of the same mark. */}
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonicalUrl} />
     {pageDescription && <meta name="description" content={pageDescription} />}
@@ -91,12 +102,24 @@ const TWITTER_CARD = "summary";
     <meta property="og:site_name" content={SITE_NAME} />
     <meta name="twitter:card" content={TWITTER_CARD} />
     <title>{title}</title>
-    <Font cssVariable="--font-geist-sans" preload />
+    {/* Only the upright face is preloaded: it is what every page paints
+        first, while italic appears only in prose and can arrive late without
+        holding up the first render. */}
+    <Font cssVariable="--font-geist-sans" preload={[{ style: "normal" }]} />
     <Font cssVariable="--font-geist-mono" />
+    {/* One `theme-color`, not a pair keyed on `prefers-color-scheme`: the
+        scheme is a class the reader can pin against the OS, and a media
+        variant would follow the OS regardless. The light value is the
+        default because without JavaScript nothing adds `.dark`. */}
+    <meta name="theme-color" content={THEME_COLOR.light} />
     {/* Runs before first paint so a stored or OS-preferred dark scheme never
-        flashes light. Must read the key and values SchemeToggle.astro writes. */}
-    <script is:inline>
+        flashes light. Must read the key and values SchemeToggle.astro writes.
+        It also keeps `theme-color` on the current scheme: watching the
+        `dark` class covers the toggle and the OS-following "Auto" mode
+        without SchemeToggle having to know the tag exists. */}
+    <script is:inline define:vars={{ themeColor: THEME_COLOR }}>
       (() => {
+        const root = document.documentElement;
         let stored = null;
         try {
           stored = localStorage.getItem("scheme");
@@ -105,7 +128,22 @@ const TWITTER_CARD = "summary";
           stored === "dark" ||
           (stored !== "light" &&
             matchMedia("(prefers-color-scheme: dark)").matches);
-        document.documentElement.classList.toggle("dark", dark);
+        root.classList.toggle("dark", dark);
+
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (!meta) return;
+        const sync = () =>
+          meta.setAttribute(
+            "content",
+            root.classList.contains("dark")
+              ? themeColor.dark
+              : themeColor.light,
+          );
+        sync();
+        new MutationObserver(sync).observe(root, {
+          attributes: true,
+          attributeFilter: ["class"],
+        });
       })();
     </script>
   </head>

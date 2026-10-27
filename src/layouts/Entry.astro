@@ -15,7 +15,8 @@ import Base from "./Base.astro";
  * built from the content's headings — a sticky rail to the left of the column
  * at `xl`, a collapsible row above it below that. The way back to the index
  * is the header nav; under `md`, where the nav is behind a button, a back
- * link stands in for it.
+ * link stands in for it. From `md` it is invisible rather than gone, so the
+ * title keeps the same distance from the site header at every width.
  */
 interface Props {
   title: string;
@@ -50,7 +51,7 @@ const toc = buildToc(headings);
     <div class="mx-auto w-full max-w-2xl xl:col-start-2 xl:mx-0 xl:max-w-none">
       <a
         href={back.href}
-        class="enter mb-6 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:hidden"
+        class="enter mb-6 flex items-center justify-center gap-2 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground md:invisible"
       >
         <ArrowLeft aria-hidden="true" class="size-4" />
         {back.label}

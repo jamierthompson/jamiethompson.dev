@@ -57,10 +57,26 @@
  * One page width and one gutter, shared by the header, <main> and the footer
  * so their edges line up at every viewport. They generate `max-w-page` and
  * `px-gutter` (and `-mx-gutter`, for a row that scrolls edge to edge).
+ *
+ * The gutter widens with the viewport, at the `sm` and `md` breakpoints: a
+ * phone needs every pixel for text, but at tablet and small-laptop widths,
+ * before `max-w-page` starts adding margin of its own, 1.5rem crowds the edge.
  */
 @theme {
   --container-page: 72rem;
   --spacing-gutter: 1.5rem;
+}
+
+@media (width >= 40rem) {
+  :root {
+    --spacing-gutter: 2rem;
+  }
+}
+
+@media (width >= 48rem) {
+  :root {
+    --spacing-gutter: 3rem;
+  }
 }
 
 :root {

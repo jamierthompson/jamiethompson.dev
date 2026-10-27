@@ -6,6 +6,9 @@ import EntryRow, { type Props as Entry } from "./EntryRow.astro";
  * filter is a convenience the script provides — without it every entry is
  * listed and the buttons stay out of the way. The chosen category lands in
  * `?category=` so a filtered list can be linked to.
+ *
+ * At `xl` it takes the entry page's grid (`src/layouts/Entry.astro`): the
+ * filter where the table of contents is, the list in the text column.
  */
 interface Props {
   entries: Entry[];
@@ -30,13 +33,13 @@ const tab =
   </p>
 ) : (
   <category-filter
-    class="enter mt-10 block lg:grid lg:grid-cols-[12rem_minmax(0,42rem)] lg:gap-16"
+    class="enter mt-10 block lg:grid lg:grid-cols-[12rem_minmax(0,42rem)] lg:gap-16 xl:grid-cols-[minmax(0,1fr)_minmax(0,42rem)_minmax(0,1fr)] xl:gap-8"
     style="--stagger: 1"
   >
     <div
       role="group"
       aria-label="Filter by category"
-      class="-mx-gutter flex gap-1 overflow-x-auto px-gutter lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:self-start lg:px-0"
+      class="-mx-gutter flex gap-1 overflow-x-auto px-gutter lg:sticky lg:top-20 lg:mx-0 lg:flex-col lg:self-start lg:px-0 xl:w-40"
     >
       <button type="button" data-category="" aria-pressed="true" class={tab}>
         All

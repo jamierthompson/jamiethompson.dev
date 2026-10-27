@@ -18,7 +18,6 @@ export const CONTACT = [
     href: "https://www.linkedin.com/in/jamiethompsondesign",
     label: "LinkedIn",
   },
-  { href: "mailto:hello@jamiethompson.design", label: "Email" },
 ] as const;
 
 /**

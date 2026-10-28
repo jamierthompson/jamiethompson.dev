@@ -5,5 +5,4 @@ pubDate: 2026-01-03
 category: "Notes"
 ---
 
-This note links to [A fixture essay](/writing/fixture-essay/) by internal link
-and to [[fixture-project|A fixture project]] by wikilink.
+This note links to [A fixture essay](/writing/fixture-essay/) by internal link.

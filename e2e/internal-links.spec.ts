@@ -35,7 +35,7 @@ function rootRelativeHrefs(html: string): string[] {
 
 test("every root-relative link resolves to a page the build emitted", () => {
   // A glob that silently matched nothing would pass this vacuously. The
-  // fixtures build the home page, two posts and a project.
+  // fixtures build the home page, the writing index and two posts.
   expect(pages.length).toBeGreaterThanOrEqual(4);
 
   const dangling: string[] = [];

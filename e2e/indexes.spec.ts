@@ -67,23 +67,6 @@ test.describe("the writing index", () => {
   });
 });
 
-test.describe("the projects index", () => {
-  test("lists each project with the same filter as writing, and opens it", async ({
-    page,
-  }) => {
-    await page.goto("/projects/");
-    const filter = page.getByRole("group", { name: "Filter by category" });
-    await expect(filter.getByRole("button")).toHaveText(["All", "Fixtures"]);
-    await filter.getByRole("button", { name: "Fixtures" }).click();
-    await expect(page).toHaveURL(/\?category=Fixtures$/);
-    await page.getByRole("link", { name: /A fixture project/ }).click();
-    await expect(page).toHaveURL(/\/projects\/fixture-project\/$/);
-    await expect(
-      page.getByRole("heading", { level: 1, name: "A fixture project" }),
-    ).toBeVisible();
-  });
-});
-
 test.describe("the table of contents", () => {
   test("at desktop widths it is a rail that follows the reader", async ({
     page,

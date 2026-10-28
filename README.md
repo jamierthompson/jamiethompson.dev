@@ -1,6 +1,6 @@
 # jamiethompson.dev
 
-Projects and writing.
+Writing, mostly about design engineering.
 Built with [Astro](https://astro.build).
 
 ## Stack
@@ -8,15 +8,13 @@ Built with [Astro](https://astro.build).
 - **Astro** — static output; React islands (`@astrojs/react`) where a page needs one
 - **shadcn/ui** — `components.json` at the root, components in `src/components/ui/`, added
   with `pnpm dlx shadcn@latest add <name>`
-- **Content collections** — `projects/` and `writing/` as markdown/MDX with typed frontmatter.
-  Both require a `category` (what the index pages filter by) and take an optional `cover`
-  (`src` + `alt`), shown on the card and at the top of the page; projects also take an
-  optional `url` to the shipped project. Image files live in `src/assets/` and are
+- **Content collection** — `writing/` as markdown/MDX with typed frontmatter. Each post
+  requires a `category` (what the index page filters by) and takes an optional `cover`
+  (`src` + `alt`), shown at the top of the page. Image files live in `src/assets/` and are
   referenced by relative path, so Astro resizes and converts them at build time (that
   needs `sharp`, a dependency of this project)
-- **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
-  build-time backlink index. The build fails on a slug claimed by two collections, and on
-  a link to a slug no collection holds
+- **Wikilinks** — `[[slug]]` resolves to the post with that slug, with a build-time
+  backlink index. The build fails on a link to a slug no post holds
 - **Tailwind CSS v4** via `@tailwindcss/vite`, with `@tailwindcss/typography` for prose
   and `tw-animate-css` for the shadcn component animations
 - **Geist / Geist Mono**, self-hosted at build time by Astro's Fonts API
@@ -87,7 +85,7 @@ and `www.jamiethompsondesign.com` 308-redirect to it.
 ```
 src/
   components/       # shared components
-  content/          # projects and writing
+  content/          # writing
   content.config.ts # the collection schemas
   layouts/          # Base.astro and Entry.astro
   lib/              # build-time helpers, tests beside them

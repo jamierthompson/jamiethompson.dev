@@ -9,10 +9,10 @@ This is a short post in **Writing**. The filename (`hello-world.md`) becomes the
 slug, so this page lives at `/writing/hello-world/`, and `category` is the label
 under its title on the home page.
 
-Wikilinks connect entries across both collections by slug:
+Wikilinks connect entries by slug:
 
 - [[on-writing-in-public|On writing in public]] resolves to another post.
-- [[this-site]] resolves to the project, with the slug as the link text.
+- [[components-in-mdx]] resolves too, with the slug as the link text.
 
 Plain markdown links work too: [the home page](/), or an external one like
 [Astro's docs](https://docs.astro.build/).

@@ -1,7 +1,7 @@
 import { getCollection, type CollectionEntry } from "astro:content";
 
-/** The two collections that have pages, both sortable by `pubDate`. */
-export type PagedCollection = "writing" | "projects";
+/** The collections that have pages, all sortable by `pubDate`. */
+export type PagedCollection = "writing";
 
 type Dated = { data: { pubDate: Date } };
 

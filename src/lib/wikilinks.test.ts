@@ -243,7 +243,7 @@ describe("MDX bodies go through the same extractor as markdown", () => {
         body: "prose",
       },
       {
-        collection: "projects",
+        collection: "writing",
         id: "chart",
         title: "Chart",
         body: '<Chart labels={[[ "The QA Rule" ]]} />',
@@ -276,8 +276,8 @@ describe("a declared format parses by that grammar", () => {
 
   it("counts an internal link written in mdx", () => {
     expect(
-      extractInternalLinkTargets("read [it](/projects/the-qa-rule/)", "mdx"),
-    ).toEqual(["projects/the-qa-rule"]);
+      extractInternalLinkTargets("read [it](/writing/the-qa-rule/)", "mdx"),
+    ).toEqual(["writing/the-qa-rule"]);
   });
 
   it("reads an indented block as code in md and as a paragraph in mdx", () => {
@@ -290,12 +290,12 @@ describe("a declared format parses by that grammar", () => {
 });
 
 describe("extractInternalLinkTargets", () => {
-  it("finds links into every collection, with or without trailing slash", () => {
+  it("finds links with or without a trailing slash", () => {
     const md =
-      "Read [the essay](/projects/the-qa-rule/) and " +
+      "Read [the essay](/writing/the-qa-rule/) and " +
       "[a note](/writing/no-prior-context).";
     expect(extractInternalLinkTargets(md)).toEqual([
-      "projects/the-qa-rule",
+      "writing/the-qa-rule",
       "writing/no-prior-context",
     ]);
   });
@@ -318,14 +318,14 @@ describe("extractInternalLinkTargets", () => {
 
   it("ignores links inside code fences and inline code", () => {
     const md =
-      "```md\n[fenced](/projects/fenced/)\n```\n" +
+      "```md\n[fenced](/writing/fenced/)\n```\n" +
       "and `[inline](/writing/inline/)` stay text.";
     expect(extractInternalLinkTargets(md)).toEqual([]);
   });
 
   it("de-duplicates repeated internal-link targets", () => {
-    const md = "[once](/projects/a/) and [twice](/projects/a/)";
-    expect(extractInternalLinkTargets(md)).toEqual(["projects/a"]);
+    const md = "[once](/writing/a/) and [twice](/writing/a/)";
+    expect(extractInternalLinkTargets(md)).toEqual(["writing/a"]);
   });
 
   /**
@@ -340,14 +340,14 @@ describe("extractInternalLinkTargets", () => {
 
   it("counts a link to a heading with no trailing slash", () => {
     expect(
-      extractInternalLinkTargets("[the part](/projects/an-essay#the-part)"),
-    ).toEqual(["projects/an-essay"]);
+      extractInternalLinkTargets("[the part](/writing/an-essay#the-part)"),
+    ).toEqual(["writing/an-essay"]);
   });
 
   it("counts a link carrying a query string", () => {
     expect(
-      extractInternalLinkTargets("[the run](/projects/the-eval/?tab=data)"),
-    ).toEqual(["projects/the-eval"]);
+      extractInternalLinkTargets("[the run](/writing/the-eval/?tab=data)"),
+    ).toEqual(["writing/the-eval"]);
   });
 });
 
@@ -361,11 +361,11 @@ describe("buildReferenceIndex", () => {
   it("refuses a wikilink no entry resolves, naming the source and target", () => {
     expect(() =>
       buildReferenceIndex([
-        entry("projects", "an-essay", "cites [[a-note]] and [[Another]]"),
+        entry("writing", "an-essay", "cites [[a-note]] and [[Another]]"),
         entry("writing", "b-note", "cites [[a-note]]"),
       ]),
     ).toThrow(
-      "A wikilink must name a published entry: projects/an-essay links to [[a-note]]; projects/an-essay links to [[another]]; writing/b-note links to [[a-note]].",
+      "A wikilink must name a published entry: writing/an-essay links to [[a-note]]; writing/an-essay links to [[another]]; writing/b-note links to [[a-note]].",
     );
   });
 
@@ -375,48 +375,21 @@ describe("buildReferenceIndex", () => {
     ).not.toThrow();
   });
 
-  it("indexes a wikilink under whichever collection holds the target", () => {
+  it("indexes a wikilink under the entry it names", () => {
     const index = buildReferenceIndex([
       entry(
         "writing",
         "a-note",
         "built in [[the-project]], argued in [[the-essay]]",
       ),
-      entry("projects", "the-project", "prose"),
-      entry("projects", "the-essay", "prose"),
+      entry("writing", "the-project", "prose"),
+      entry("writing", "the-essay", "prose"),
     ]);
-    expect(index.get(referenceKey("projects", "the-project"))).toEqual([
+    expect(index.get(referenceKey("writing", "the-project"))).toEqual([
       { collection: "writing", id: "a-note", title: "title:a-note" },
     ]);
-    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
+    expect(index.get(referenceKey("writing", "the-essay"))).toEqual([
       { collection: "writing", id: "a-note", title: "title:a-note" },
-    ]);
-    expect(index.get(referenceKey("writing", "the-project"))).toBeUndefined();
-  });
-
-  it("indexes internal-link references to projects", () => {
-    const index = buildReferenceIndex([
-      entry(
-        "projects",
-        "an-essay",
-        "shipped as [the project](/projects/the-project/)",
-      ),
-    ]);
-    expect(index.get(referenceKey("projects", "the-project"))).toEqual([
-      { collection: "projects", id: "an-essay", title: "title:an-essay" },
-    ]);
-  });
-
-  it("indexes internal-link references to writing and projects alike", () => {
-    const index = buildReferenceIndex([
-      entry("writing", "a-note", "stated in [the note](/writing/the-note/)"),
-      entry("writing", "b-note", "argued in [the essay](/projects/the-essay/)"),
-    ]);
-    expect(index.get(referenceKey("writing", "the-note"))).toEqual([
-      { collection: "writing", id: "a-note", title: "title:a-note" },
-    ]);
-    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
-      { collection: "writing", id: "b-note", title: "title:b-note" },
     ]);
   });
 
@@ -435,25 +408,16 @@ describe("buildReferenceIndex", () => {
     ]);
   });
 
-  it("does not conflate same ids across collections", () => {
-    const index = buildReferenceIndex([
-      entry("writing", "a", "[link](/projects/shared/)"),
-      entry("writing", "b", "[link](/writing/shared/)"),
-    ]);
-    expect(index.get(referenceKey("projects", "shared"))).toHaveLength(1);
-    expect(index.get(referenceKey("writing", "shared"))).toHaveLength(1);
-  });
-
   it("gives the target a Referenced by row when the link is anchored", () => {
     const index = buildReferenceIndex([
       {
         collection: "writing",
         id: "source",
         title: "Source",
-        body: "argued in [the essay](/projects/the-essay/#the-claim)",
+        body: "argued in [the essay](/writing/the-essay/#the-claim)",
       },
     ]);
-    expect(index.get(referenceKey("projects", "the-essay"))).toEqual([
+    expect(index.get(referenceKey("writing", "the-essay"))).toEqual([
       { collection: "writing", id: "source", title: "Source" },
     ]);
   });
@@ -487,10 +451,10 @@ describe("self-reference exemption compares like with like", () => {
 });
 
 describe("resolveWikiTarget", () => {
-  it("lands on the collection that holds the target", () => {
-    const keys = new Set(["projects/oklch", "projects/on-color"]);
-    expect(resolveWikiTarget("oklch", keys)).toBe("projects/oklch");
-    expect(resolveWikiTarget("on-color", keys)).toBe("projects/on-color");
+  it("lands on the entry that holds the target", () => {
+    const keys = new Set(["writing/oklch", "writing/on-color"]);
+    expect(resolveWikiTarget("oklch", keys)).toBe("writing/oklch");
+    expect(resolveWikiTarget("on-color", keys)).toBe("writing/on-color");
   });
 
   it("has no answer for a target no collection holds", () => {
@@ -513,9 +477,9 @@ describe("findSlugCollisions", () => {
 });
 
 describe("rendered output through the real remark pipeline", () => {
-  it("renders [[target]] into the collection that holds it", async () => {
-    const html = await render("See [[oklch]].", ["projects/oklch"]);
-    expect(html).toContain('href="/projects/oklch/"');
+  it("renders [[target]] as a link to its entry", async () => {
+    const html = await render("See [[oklch]].", ["writing/oklch"]);
+    expect(html).toContain('href="/writing/oklch/"');
     expect(html).toContain('class="internal"');
   });
 

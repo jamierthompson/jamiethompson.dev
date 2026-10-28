@@ -81,7 +81,7 @@ test.describe("the canonical URL", () => {
     page,
   }) => {
     // A glob that silently matched nothing would pass this test vacuously. The
-    // fixtures build the home page, two posts and a project.
+    // fixtures build the home page, the writing index and two posts.
     expect(routes.length).toBeGreaterThanOrEqual(4);
 
     const violations: string[] = [];

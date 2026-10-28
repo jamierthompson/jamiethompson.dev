@@ -6,10 +6,7 @@ export const SITE_URL = "https://jamiethompson.dev";
 export const SITE_NAME = "Jamie Thompson";
 
 /** The sections the header links to, in display order. */
-export const NAV = [
-  { href: "/projects/", label: "Projects" },
-  { href: "/writing/", label: "Writing" },
-] as const;
+export const NAV = [{ href: "/writing/", label: "Writing" }] as const;
 
 /** Where else to find me. Every href here leaves the site. */
 export const CONTACT = [

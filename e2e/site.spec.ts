@@ -78,30 +78,21 @@ test("at desktop widths the header nav is the way back, and the back link is gon
   await expect(page).toHaveURL(/\/writing\/$/);
 });
 
-test("a wikilink reaches a project, and the project lists the post as a backlink", async ({
+test("a wikilink reaches the post it names, and that post lists the source as a backlink", async ({
   page,
 }) => {
-  await page.goto("/writing/fixture-note/");
+  await page.goto("/writing/fixture-essay/");
   await page
     .getByRole("article")
-    .getByRole("link", { name: "A fixture project" })
+    .getByRole("link", { name: "the fixture note" })
     .click();
-  await expect(page).toHaveURL(/\/projects\/fixture-project\/$/);
+  await expect(page).toHaveURL(/\/writing\/fixture-note\/$/);
   await expect(
-    page.getByRole("heading", { level: 1, name: "A fixture project" }),
+    page.getByRole("heading", { level: 1, name: "A fixture note" }),
   ).toBeVisible();
   await expect(
     page.getByRole("complementary").getByRole("link", {
-      name: "A fixture note",
+      name: "A fixture essay",
     }),
   ).toBeVisible();
-});
-
-test("a project's wikilink resolves into the writing collection", async ({
-  page,
-}) => {
-  await page.goto("/projects/fixture-project/");
-  await expect(
-    page.getByRole("article").getByRole("link", { name: "A fixture essay" }),
-  ).toHaveAttribute("href", "/writing/fixture-essay/");
 });

@@ -1,7 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
 const SECTIONS = [
-  { label: "Projects", path: "/projects/", heading: "Projects" },
   { label: "Writing", path: "/writing/", heading: "Writing" },
 ] as const;
 
@@ -29,9 +28,6 @@ test.describe("the header", () => {
       "aria-current",
       "page",
     );
-    await expect(
-      nav.getByRole("link", { name: "Projects" }),
-    ).not.toHaveAttribute("aria-current");
   });
 
   test("the name goes home", async ({ page }) => {
@@ -105,9 +101,9 @@ test.describe("the drawer", () => {
     await openDrawer(page);
     await page
       .getByRole("dialog", { name: "Navigation" })
-      .getByRole("link", { name: "Projects" })
+      .getByRole("link", { name: "Writing" })
       .click();
-    await expect(page).toHaveURL(/\/projects\/$/);
+    await expect(page).toHaveURL(/\/writing\/$/);
   });
 
   test("the drawer's scheme toggle works, and the page does not scroll behind it", async ({

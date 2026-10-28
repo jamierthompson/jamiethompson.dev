@@ -19,7 +19,7 @@ import type { Node } from "unist";
  * entry page builds that index.
  */
 
-export const LINKED_COLLECTIONS = ["writing", "projects"] as const;
+export const LINKED_COLLECTIONS = ["writing"] as const;
 
 export type LinkedCollection = (typeof LINKED_COLLECTIONS)[number];
 

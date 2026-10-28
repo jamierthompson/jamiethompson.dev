@@ -19,15 +19,15 @@ real writing arrives.
 
 Every field the schema knows is set on this post:
 
-| Field         | Required | Where it shows                               |
-| ------------- | -------- | -------------------------------------------- |
-| `title`       | yes      | `<h1>`, `<title>`, `og:title`, every list    |
-| `description` | yes      | meta description, every list                 |
-| `pubDate`     | yes      | under the title, every list, sort order      |
-| `updated`     | no       | under the title, after the date              |
-| `category`    | yes      | under the title, the index filter            |
-| `cover`       | no       | under the title (posts), the card (projects) |
-| `draft`       | no       | `true` removes the entry from every route    |
+| Field         | Required | Where it shows                            |
+| ------------- | -------- | ----------------------------------------- |
+| `title`       | yes      | `<h1>`, `<title>`, `og:title`, every list |
+| `description` | yes      | meta description, every list              |
+| `pubDate`     | yes      | under the title, every list, sort order   |
+| `updated`     | no       | under the title, after the date           |
+| `category`    | yes      | under the title, the index filter         |
+| `cover`       | no       | under the title                           |
+| `draft`       | no       | `true` removes the entry from every route |
 
 > A blockquote. The `updated` date prints under the title only on the entry
 > page; lists show the original date, which is what they sort by.
@@ -82,7 +82,7 @@ Inline code like `pnpm run build` gets a tinted chip rather than backticks.
 - A bullet with a nested list:
   - one
   - two
-- A bullet with a [plain internal link](/projects/) and an
+- A bullet with a [plain internal link](/writing/) and an
   [external link](https://docs.astro.build/en/guides/images/) that gets the
   leaving-the-site marker.
 
@@ -95,8 +95,7 @@ Inline code like `pnpm run build` gets a tinted chip rather than backticks.
 
 ## Links between entries
 
-Wikilinks resolve across both collections: [[this-site]] is a project,
-[[hello-world]] is a post, and [[components-in-mdx|this one]] uses custom link
+Wikilinks resolve by slug: [[hello-world]] is a post, and [[components-in-mdx|this one]] uses custom link
 text. Each of those pages lists this post under "Referenced by".
 
 A footnote[^1] renders at the bottom of the page.

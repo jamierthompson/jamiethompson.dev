@@ -15,8 +15,8 @@ const routes = readdirSync("dist", { recursive: true })
 /** A markdown-authored link, the surface the rehype plugin owns. */
 const MARKDOWN_LINK_ROUTE = "/writing/fixture-essay/";
 const MARKDOWN_LINK_NAME = "an external reference";
-/** The `.astro` surface, rendered by the component on the index page. */
-const COMPONENT_LINK_NAME = "agent-conventions";
+/** The `.astro` surface, rendered by the component in the site footer. */
+const COMPONENT_LINK_NAME = "GitHub";
 
 /** WCAG 2.2 1.4.11 Non-text Contrast, for a graphic that carries meaning. */
 const NON_TEXT_CONTRAST_FLOOR = 3;
@@ -495,7 +495,17 @@ test.describe("focus and the keyboard path", () => {
   }) => {
     await page.goto("/");
     const link = page.getByRole("link", { name: COMPONENT_LINK_NAME });
+    // The link sits in the footer, below the fold, and `focus()` does not
+    // wait out the smooth scroll that brings it into view.
+    await link.scrollIntoViewIfNeeded();
     await link.focus();
+    // `transition-colors` covers outline-color, so read the ring once it has
+    // settled rather than mid-fade from the resting `outline-ring/50`.
+    await link.evaluate((element) =>
+      Promise.all(
+        element.getAnimations().map((animation) => animation.finished),
+      ),
+    );
 
     const focused = await link.evaluate((element) => {
       const style = getComputedStyle(element);

@@ -14,12 +14,14 @@ const links = [
   title={`Not found — ${SITE_NAME}`}
   description="There's no page at this address."
 >
-  <h1 class="enter text-3xl font-medium tracking-tight sm:text-4xl">
-    Not found
+  <p class="enter font-mono text-sm text-muted-foreground">404</p>
+  <h1 class="enter mt-2 text-3xl font-medium tracking-tight text-balance sm:text-4xl">
+    Nothing here yet
   </h1>
-  <p class="enter mt-4 text-muted-foreground" style="--stagger: 1">
-    There's no page at this address. It may have moved, or the link may be
-    mistyped.
+  <p class="enter mt-4 max-w-xl text-muted-foreground" style="--stagger: 1">
+    You've found a gap in the site. The link might have a typo, the page might
+    have moved, or it's something I haven't made yet. Everything that does exist
+    is a click away:
   </p>
   <ul class="enter mt-8 flex flex-wrap gap-x-6 gap-y-2" style="--stagger: 2">
     {links.map((link) => (

@@ -14,9 +14,6 @@ Built with [Astro](https://astro.build).
   optional `url` to the shipped project. Image files live in `src/assets/` and are
   referenced by relative path, so Astro resizes and converts them at build time (that
   needs `sharp`, a dependency of this project)
-- **Featured content** — `src/content/featured.yaml` lists, in order, which projects and
-  posts the home page shows. The build fails on a slug that doesn't exist, is a draft, or
-  is listed twice
 - **Wikilinks** — `[[slug]]` resolves to whichever collection holds that slug, with a
   build-time backlink index. The build fails on a slug claimed by two collections, and on
   a link to a slug no collection holds
@@ -90,7 +87,7 @@ and `www.jamiethompsondesign.com` 308-redirect to it.
 ```
 src/
   components/       # shared components
-  content/          # projects and writing, plus featured.yaml
+  content/          # projects and writing
   content.config.ts # the collection schemas
   layouts/          # Base.astro and Entry.astro
   lib/              # build-time helpers, tests beside them

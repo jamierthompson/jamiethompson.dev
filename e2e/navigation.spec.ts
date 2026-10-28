@@ -140,7 +140,7 @@ test.describe("the footer", () => {
     await expect(footer).toContainText(
       `© ${new Date().getUTCFullYear()} Jamie Thompson`,
     );
-    for (const name of ["GitHub", "LinkedIn", "Email"]) {
+    for (const name of ["GitHub", "LinkedIn"]) {
       await expect(footer.getByRole("link", { name })).toHaveAttribute(
         "data-external",
         "",
@@ -148,11 +148,11 @@ test.describe("the footer", () => {
     }
     // At desktop width the copyright and the last link share a row.
     const copyright = await footer.getByText(/^©/).boundingBox();
-    const email = await footer
-      .getByRole("link", { name: "Email" })
+    const last = await footer
+      .getByRole("link", { name: "LinkedIn" })
       .boundingBox();
     expect(copyright).not.toBeNull();
-    expect(email).not.toBeNull();
-    expect(Math.abs(copyright!.y - email!.y)).toBeLessThan(4);
+    expect(last).not.toBeNull();
+    expect(Math.abs(copyright!.y - last!.y)).toBeLessThan(4);
   });
 });

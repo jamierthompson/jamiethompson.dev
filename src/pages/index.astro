@@ -1,79 +1,46 @@
 ---
 import Base from "../layouts/Base.astro";
-import ExternalLink from "../components/ExternalLink.astro";
-import ProjectCard from "../components/ProjectCard.astro";
-import EntryRow from "../components/EntryRow.astro";
-import { getFeatured } from "../lib/featured";
 import { SITE_NAME } from "../lib/site";
-
-/** Which entries, and in what order, is `src/content/featured.yaml`. */
-const { projects, writing } = await getFeatured();
 ---
 
 <Base
   title={SITE_NAME}
-  description="Design engineer. Projects, and writing about the things I build."
+  description="Design engineer who owns the finish layer."
 >
-  <header class="enter flex items-center gap-3">
-    {/* Initials until there's a photo: put one in src/assets/ and swap this
-        for an <Image> from astro:assets, keeping the size and the rounding. */}
-    <span
-      aria-hidden="true"
-      class="grid size-10 shrink-0 place-items-center rounded-full bg-foreground font-mono text-xs font-medium tracking-tight text-background"
-    >
-      JT
-    </span>
-    <div>
-      <h1 class="font-medium">{SITE_NAME}</h1>
-      <p class="text-muted-foreground">Design engineer</p>
-    </div>
-  </header>
-
-  <div class="enter prose mt-8" style="--stagger: 1">
-    <p>
-      I'm a design engineer, and this is where I keep the things I build and the
-      writing that comes out of building them.
+  <div class="mx-auto max-w-3xl text-2xl tracking-tight text-pretty sm:text-3xl sm:leading-snug">
+    <h1 class="enter">
+      Hello.
+      <br />
+      I'm Jamie Thompson, a design engineer who cares about easing curves, color
+      ramps, and frontend craft the way some people care about sports.
+    </h1>
+    <p class="enter mt-6" style="--stagger: 1">
+      I've spent my career owning the finish layer — visual and interactive
+      details — of products, and building design systems from the ground up that
+      hold the bar for a team.
     </p>
-    <p>
-      The working rules I give AI agents are public at{" "}
-      <ExternalLink href="https://github.com/jamiethompsondesign/agent-conventions">
-        agent-conventions
-      </ExternalLink>
-      .
+    <p class="enter mt-6" style="--stagger: 2">
+      Right now that's Lacquer, a design system for finished AI-generated UI.{" "}
+      <span class="text-muted-foreground">
+        Every component has a written contract, is built from that contract,
+        graded against it before it ships, and regraded by CI on every PR after.
+      </span>
+    </p>
+    <p class="enter mt-6" style="--stagger: 3">
+      The background of this page is the other kind of thing I make.{" "}
+      <span class="text-muted-foreground">
+        It's a field of code drawn on the GPU: 25 fps while the light moves, 60
+        fps when you click, none once you leave it alone. I wrote up how.
+      </span>
+    </p>
+    <p class="enter mt-6" style="--stagger: 4">
+      I also design interiors. Different material, same job.{" "}
+      <span class="text-muted-foreground">
+        Have a point of view and carry it all the way to the finish.
+      </span>
+    </p>
+    <p class="enter mt-6" style="--stagger: 5">
+      Nice to meet you.
     </p>
   </div>
-
-  {projects.length > 0 && (
-    <section
-      class="enter mt-16"
-      style="--stagger: 2"
-      aria-labelledby="projects"
-    >
-      <h2 id="projects" class="mb-4 font-medium">
-        Projects
-      </h2>
-      <ul class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {projects.map((project) => (
-          <li>
-            <ProjectCard project={project} />
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
-
-  {writing.length > 0 && (
-    <section class="enter mt-16" style="--stagger: 3" aria-labelledby="writing">
-      <h2 id="writing" class="mb-4 font-medium">
-        Writing
-      </h2>
-      <ul class="max-w-2xl">
-        {writing.map((post) => (
-          <li>
-            <EntryRow href={`/writing/${post.id}/`} {...post.data} />
-          </li>
-        ))}
-      </ul>
-    </section>
-  )}
 </Base>

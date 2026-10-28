@@ -9,7 +9,7 @@ test("home page renders and the console is clean", async ({ page }) => {
 
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { level: 1, name: "Jamie Thompson" }),
+    page.getByRole("heading", { level: 1, name: /Jamie Thompson/ }),
   ).toBeVisible();
   expect(errors).toEqual([]);
 });
@@ -18,14 +18,15 @@ test("home page renders and the console is clean", async ({ page }) => {
  * These run against `e2e/fixtures/content` (see `test:e2e`), so they assert on
  * entries that exist for them rather than on whatever the writing is today.
  */
-test("primary flow: home → a post → the post it links, which links back", async ({
+test("primary flow: home → writing → a post → the post it links, which links back", async ({
   page,
 }) => {
   await page.goto("/");
   await page
-    .getByRole("region", { name: "Writing" })
-    .getByRole("link", { name: /A fixture note/ })
+    .getByRole("navigation", { name: "Site" })
+    .getByRole("link", { name: "Writing" })
     .click();
+  await page.getByRole("link", { name: /A fixture note/ }).click();
   await expect(
     page.getByRole("heading", { level: 1, name: "A fixture note" }),
   ).toBeVisible();
@@ -45,24 +46,6 @@ test("primary flow: home → a post → the post it links, which links back", as
   await expect(
     backlinks.getByRole("link", { name: "A fixture note" }),
   ).toBeVisible();
-});
-
-test("the home page lists both collections, and each entry opens", async ({
-  page,
-}) => {
-  for (const [section, entry] of [
-    ["Projects", "A fixture project"],
-    ["Writing", "A fixture essay"],
-  ] as const) {
-    await page.goto("/");
-    await page
-      .getByRole("region", { name: section })
-      .getByRole("link", { name: new RegExp(entry) })
-      .click();
-    await expect(
-      page.getByRole("heading", { level: 1, name: entry }),
-    ).toBeVisible();
-  }
 });
 
 test("below the nav breakpoint, an entry's back link returns to its index", async ({

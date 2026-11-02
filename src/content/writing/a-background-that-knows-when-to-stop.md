@@ -1,8 +1,7 @@
 ---
 title: A background that knows when to stop
 description: The animated background of this site is a page of code the wind blows light across, drawn on the GPU. The interesting part is not how it moves but how it decides not to. 25 frames a second while the paint drifts, 60 during a ripple, none once you leave it alone.
-pubDate: 2026-11-04
-draft: true
+pubDate: 2026-11-02
 category: "Engineering"
 ---
 

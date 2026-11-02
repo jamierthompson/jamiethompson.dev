@@ -12,6 +12,9 @@ import { CONTENT_DIR } from "./lib/contentDir";
  *
  * `category` labels an entry in a list and is what the index page filters
  * by. Required, so every entry can be found under some tab.
+ *
+ * `draft` keeps an entry out of the production build. The dev server still
+ * renders it, so a draft can be previewed at its own URL before it ships.
  */
 const writing = defineCollection({
   loader: glob({ pattern: "*.{md,mdx}", base: `${CONTENT_DIR}/writing` }),

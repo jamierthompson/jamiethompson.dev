@@ -4,6 +4,7 @@ description: "A showcase post: cover image, every markdown feature, an inline fi
 pubDate: 2026-10-23
 updated: 2026-10-23
 category: "Showcase"
+draft: true
 cover:
   src: "../../assets/showcase-cover.jpg"
   alt: "A weathered wooden fence line against a pale sky, with tall grass in the foreground."
@@ -95,8 +96,8 @@ Inline code like `pnpm run build` gets a tinted chip rather than backticks.
 
 ## Links between entries
 
-Wikilinks resolve by slug: [[hello-world]] is a post, and [[components-in-mdx|this one]] uses custom link
-text. Each of those pages lists this post under "Referenced by".
+Wikilinks resolve by slug: [[components-in-mdx]] uses the slug as the link text, and [[components-in-mdx|this one]] uses custom link
+text. That page lists this post under "Referenced by".
 
 A footnote[^1] renders at the bottom of the page.
 

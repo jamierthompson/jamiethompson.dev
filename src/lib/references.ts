@@ -1,4 +1,5 @@
 import { getCollection } from "astro:content";
+import { isVisible } from "./collections";
 import {
   buildReferenceIndex,
   entryFormatFromPath,
@@ -9,14 +10,14 @@ import {
 } from "./wikilinks";
 
 /**
- * The index spans every published entry and is identical for every page, so
+ * The index spans every visible entry and is identical for every page, so
  * it is built once per build and shared across getBacklinks callers.
  */
 let indexPromise: Promise<Map<string, Backlink[]>> | undefined;
 
 async function buildIndex(): Promise<Map<string, Backlink[]>> {
-  const published = await getCollection("writing", ({ data }) => !data.draft);
-  const entries: LinkedEntry[] = published.map((entry) => ({
+  const visible = await getCollection("writing", isVisible);
+  const entries: LinkedEntry[] = visible.map((entry) => ({
     collection: entry.collection,
     id: entry.id,
     title: entry.data.title,

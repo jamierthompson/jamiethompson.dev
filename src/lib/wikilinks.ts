@@ -221,8 +221,9 @@ export function extractInternalLinkTargets(
  * refuse it either, because Astro's glob loader catches a render error, logs
  * it and stores the entry with an empty body (`content/loaders/glob.js`).
  * Every entry page builds this index, so throwing here fails the build.
- * The index is built from published entries, so a link to a draft is refused
- * too — it would be a 404 all the same.
+ * The index is built from visible entries, so in a production build a link
+ * from a published entry to a draft is refused too — it would be a 404 all
+ * the same. In dev, drafts are visible and such a link resolves.
  *
  * Both sides of the self-link comparison are slugified: a wikilink target
  * always is, but an entry id is only slug-shaped by convention — Astro's

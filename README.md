@@ -97,3 +97,9 @@ src/
   pages/            # routes
   styles/           # global.css — Tailwind entry and design tokens
 ```
+
+## License
+
+The code is [MIT](LICENSE). The writing and images under `src/content/` and
+`src/assets/` are copyright Jamie Thompson, all rights reserved, and are not
+covered by that license.

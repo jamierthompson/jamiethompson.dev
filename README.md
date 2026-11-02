@@ -1,13 +1,15 @@
 # jamiethompson.dev
 
-Writing, mostly about design engineering.
+Writing, mostly about design engineering, live at [jamiethompson.dev](https://jamiethompson.dev).
 Built with [Astro](https://astro.build).
 
 ## Stack
 
-- **Astro** — static output; React islands (`@astrojs/react`) where a page needs one
+- **Astro 7** — static output; React islands (`@astrojs/react`) where a page needs one
 - **shadcn/ui** — `components.json` at the root, components in `src/components/ui/`, added
   with `pnpm dlx shadcn@latest add <name>`
+- **AI SDK** — `@ai-sdk/react` drives the `useChat` islands in `src/components/use-chat/`,
+  which play back scripted turns through a fake transport, so the site never calls a model
 - **Content collection** — `writing/` as markdown/MDX with typed frontmatter. Each post
   requires a `category` (what the index page filters by) and takes an optional `cover`
   (`src` + `alt`), shown at the top of the page. Image files live in `src/assets/` and are
@@ -44,6 +46,8 @@ pnpm run build      # production build to dist/
 pnpm run preview    # serve the production build
 pnpm run format     # prettier --write
 ```
+
+Playwright needs its browser once: `pnpm exec playwright install chromium`.
 
 ## The gate
 
@@ -84,6 +88,7 @@ and `www.jamiethompsondesign.com` 308-redirect to it.
 
 ```
 src/
+  assets/           # images referenced from writing, resized at build time
   components/       # shared components
   content/          # writing
   content.config.ts # the collection schemas

@@ -203,12 +203,16 @@ describe("Base", () => {
   });
 
   describe("the card", () => {
-    it("claims the summary card, having no image for a larger one", async () => {
-      // The site has image assets, but no `og:image` yet, and
-      // `summary_large_image` without one renders as a blank panel.
+    it("claims the large card and ships the image that earns it", async () => {
+      // `summary_large_image` without an `og:image` renders as a blank
+      // panel, so the two travel together: the site-wide card at an absolute
+      // URL on the site's own origin, with its size and a text alternative.
       const html = await render({ title: "Jamie Thompson" }, "/");
-      expect(contentOf(html, "twitter:card")).toBe("summary");
-      expect(html).not.toContain("og:image");
+      expect(contentOf(html, "twitter:card")).toBe("summary_large_image");
+      expect(contentOf(html, "og:image")).toBe(`${SITE_URL}/og.png`);
+      expect(contentOf(html, "og:image:width")).toBe("1200");
+      expect(contentOf(html, "og:image:height")).toBe("630");
+      expect(contentOf(html, "og:image:alt")).not.toBe("");
     });
   });
 

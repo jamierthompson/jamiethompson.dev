@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "check": "astro check",
     "test": "vitest run",
-    "test:e2e": "CONTENT_DIR=./e2e/fixtures/content pnpm run build && playwright test"
+    "test:e2e": "CONTENT_DIR=./e2e/fixtures/content pnpm run build && playwright test",
+    "og": "node scripts/og-image.mjs"
   },
   "dependencies": {
     "@ai-sdk/react": "^4.0.163",

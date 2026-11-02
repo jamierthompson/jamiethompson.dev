@@ -10,9 +10,9 @@ export const NAV = [{ href: "/writing/", label: "Writing" }] as const;
 
 /** Where else to find me. Every href here leaves the site. */
 export const CONTACT = [
-  { href: "https://github.com/jamiethompsondesign", label: "GitHub" },
+  { href: "https://github.com/jamierthompson", label: "GitHub" },
   {
-    href: "https://www.linkedin.com/in/jamiethompsondesign",
+    href: "https://www.linkedin.com/in/jamierthompson",
     label: "LinkedIn",
   },
 ] as const;

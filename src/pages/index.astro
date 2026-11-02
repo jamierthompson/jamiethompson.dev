@@ -1,6 +1,28 @@
 ---
+import EntryRow from "../components/EntryRow.astro";
+import ExternalLink from "../components/ExternalLink.astro";
 import Base from "../layouts/Base.astro";
+import { published } from "../lib/collections";
 import { SITE_NAME } from "../lib/site";
+
+/**
+ * The posts the intro points at, by slug. Each is linked only while it is
+ * published (`published` hides drafts from a production build), so the page
+ * never promises writing that is not there to read: the sentence stays and
+ * the link appears when the post does.
+ */
+const posts = await published("writing");
+const post = (id: string) => posts.find((entry) => entry.id === id);
+const useChat = post("two-state-machines-inside-use-chat");
+const background = post("a-background-that-knows-when-to-stop");
+
+/** The companion app the useChat essay runs its turn against. */
+const COMPANION_URL = "https://two-state-machines.vercel.app";
+
+/** The posts "Lately" lists, newest first, published only. */
+const lately = [useChat, background].filter(
+  (entry): entry is NonNullable<typeof entry> => entry !== undefined,
+);
 ---
 
 <Base
@@ -19,18 +41,30 @@ import { SITE_NAME } from "../lib/site";
       details — of products, and building design systems from the ground up that
       hold the bar for a team.
     </p>
+    {/* Lacquer gets a link once it has a public page to point at. */}
     <p class="enter mt-6" style="--stagger: 2">
-      Right now that's Lacquer, a design system for finished AI-generated UI.{" "}
+      Right now that's Lacquer, a library of AI interface patterns for design
+      engineers.{" "}
       <span class="text-muted-foreground">
-        Every component has a written contract, is built from that contract,
-        graded against it before it ships, and regraded by CI on every PR after.
+        One composed component at a time, starting with the emerging ones. Each
+        ships with a working demo, every state it has to handle, and the code.
       </span>
     </p>
     <p class="enter mt-6" style="--stagger: 3">
       The background of this page is the other kind of thing I make.{" "}
       <span class="text-muted-foreground">
         It's a field of code drawn on the GPU: 25 fps while the light moves, 60
-        fps when you click, none once you leave it alone. I wrote up how.
+        fps when you click, none once you leave it alone.{" "}
+        {background ? (
+          <a
+            href={`/writing/${background.id}/`}
+            class="underline underline-offset-4 transition-colors hover:text-foreground"
+          >
+            I wrote up how.
+          </a>
+        ) : (
+          "I'm writing up how."
+        )}
       </span>
     </p>
     <p class="enter mt-6" style="--stagger: 4">
@@ -43,4 +77,37 @@ import { SITE_NAME } from "../lib/site";
       Nice to meet you.
     </p>
   </div>
+
+  <section
+    aria-labelledby="lately"
+    class="enter mx-auto mt-20 max-w-3xl"
+    style="--stagger: 6"
+  >
+    <h2 id="lately" class="text-sm font-medium text-muted-foreground">
+      Lately
+    </h2>
+    <ul class="mt-4">
+      {lately.map((entry) => (
+        <li>
+          <EntryRow href={`/writing/${entry.id}/`} {...entry.data} />
+        </li>
+      ))}
+      <li>
+        {/* Block children, not a flex column: the external marker is the
+            anchor's `::after`, and in a flex column it would be a row of its
+            own. Inline, it follows the last line of the description. */}
+        <ExternalLink
+          href={COMPANION_URL}
+          class="-mx-3 block rounded-xl px-3 py-3 text-muted-foreground transition-colors hover:bg-muted/70"
+        >
+          <span class="mb-1 block text-sm">App</span>
+          <span class="mb-1 block font-medium text-foreground">
+            Two state machines, live
+          </span>
+          The useChat essay's companion: one turn against a real model, with the
+          status and every part's state instrumented beside it.
+        </ExternalLink>
+      </li>
+    </ul>
+  </section>
 </Base>

@@ -8,10 +8,14 @@ import { SITE_URL } from "../src/lib/site";
  * those files from localhost — so reading the DOM here proves what a crawler
  * would fetch from the deployed origin, not what the dev server improvises.
  */
-const routes = readdirSync("dist", { recursive: true })
-  .filter((entry): entry is string => typeof entry === "string")
+const files = readdirSync("dist", { recursive: true }).filter(
+  (entry): entry is string => typeof entry === "string",
+);
+const routes = files
   .filter((entry) => entry.endsWith("index.html"))
   .map((entry) => `/${entry.slice(0, -"index.html".length)}`);
+/** Every file the build emitted, as the path it is served at. */
+const assets = new Set(files.map((entry) => `/${entry}`));
 
 /** A route with a path segment, where a relative canonical would show up. */
 const NESTED_ROUTE = "/writing/fixture-essay/";
@@ -189,18 +193,26 @@ test.describe("the card", () => {
     expect(head.og["og:description"]?.length).toBeGreaterThan(0);
   });
 
-  test("the card claims the small summary, not an image it does not have", async ({
+  test("every page claims the large card and ships the one image it has", async ({
     page,
   }) => {
-    // `summary_large_image` with no `og:image` renders as a blank panel.
-    const withImage: string[] = [];
+    // `summary_large_image` with no `og:image` renders as a blank panel, so
+    // every page that claims it has to name the image, absolutely, on the
+    // site's own origin, and the build has to emit the file it names.
+    expect(assets.has("/og.png")).toBe(true);
+    const wrong: string[] = [];
     for (const route of routes) {
       await page.goto(route);
       const head = await readHead(page);
-      expect(head.twitterCard, route).toBe("summary");
-      if (head.og["og:image"] !== undefined) withImage.push(route);
+      if (head.twitterCard !== "summary_large_image") {
+        wrong.push(`${route}: twitter:card ${head.twitterCard}`);
+      }
+      if (head.og["og:image"] !== `${SITE_URL}/og.png`) {
+        wrong.push(`${route}: og:image ${head.og["og:image"]}`);
+      }
+      if (!head.og["og:image:alt"]) wrong.push(`${route}: no og:image:alt`);
     }
-    expect(withImage).toEqual([]);
+    expect(wrong).toEqual([]);
   });
 
   test("og:title never carries the site name twice", async ({ page }) => {

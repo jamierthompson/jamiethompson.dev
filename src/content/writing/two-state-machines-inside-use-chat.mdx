@@ -5,6 +5,11 @@ pubDate: 2026-11-02
 category: "Thoughts"
 ---
 
+import { ApprovalGap } from "../../components/use-chat/ApprovalGap";
+import { PartLifecycle } from "../../components/use-chat/PartLifecycle";
+import { StatusMachine } from "../../components/use-chat/StatusMachine";
+import { WireReplay } from "../../components/use-chat/WireReplay";
+
 Open any AI product and watch one turn. You type, you press Send, and Send
 becomes Stop. A thinking indicator appears. It is replaced by a reasoning
 disclosure, then a tool card that spins, then text arriving with a caret.
@@ -17,6 +22,12 @@ product is built on the Vercel AI SDK, the machine is already written down.
 `useChat` keeps it at two levels: one coarse status for the whole chat, and a
 fine state on every part of every message. Most of the interface work in an
 AI product is deciding which of the two a given pixel should listen to.
+
+The demos in this piece run the real `useChat`. There is no model behind
+them: a scripted conversation is played back through the same stream
+protocol a server would send, so every status and every state you see is the
+one the hook holds. A [companion app](https://github.com/jamierthompson/two-state-machines)
+runs the same turn against a real model, with the same instruments beside it.
 
 ## The coarse one: four values
 
@@ -31,11 +42,19 @@ AI product is deciding which of the two a given pixel should listen to.
 
 That is the whole top-level machine. There is no `thinking`, no
 `calling-tool`, no `awaiting-approval`. The status does not know what kind of
-content is streaming, only that something is. Reading `chat.ts` in the `ai`
-package, four things move it: sending sets `submitted`, the first chunk
-written sets `streaming`, the stream ending sets `ready` whether it ended
-normally or by abort, and a thrown error sets `error`. Nothing else touches
-it.
+content is streaming, only that something is. Send the first message below
+and watch it go round; the second scripted message fails partway through, so
+the error edge gets walked too.
+
+<StatusMachine client:visible />
+
+Reading `chat.ts` in the `ai` package (7.0 at the time of writing), five
+things move it. Sending sets `submitted`. The first chunk that changes a
+part sets `streaming`; the `start` and `start-step` chunks that precede it
+do not, so the status waits for the first real content. The stream ending
+sets `ready`, whether it ended on its own or because `stop()` cut it off. A
+thrown error sets `error`. And `clearError()` takes it from `error` back to
+`ready`, which sending again does implicitly. Nothing else touches it.
 
 The composer's primary control falls out of it in one line:
 
@@ -52,26 +71,27 @@ progress", and it is the only input the composer should have.
 ## The fine one: a state on every part
 
 A `UIMessage` is `{ id, role, parts, metadata }`, and `parts` is where the
-rest of the machine lives. The part types that render during a turn:
+rest of the machine lives. During a turn the parts that render are `text`
+and `reasoning`, each with the text so far and a `state`; `tool-<name>`, or
+`dynamic-tool` when the tool was not known at build time, with a
+`toolCallId`, the `input`, and a `state` of its own; and `step-start`, a
+marker at the start of each model call. Alongside them an app can stream
+`file`, `source-url`, `source-document` and `data-<name>` parts, which carry
+content rather than state.
 
-- `text`, with the text so far and `state: "streaming" | "done"`.
-- `reasoning`, with the same shape.
-- `tool-<name>`, or `dynamic-tool` when the tool was not known at build
-  time, with a `toolCallId`, the `input`, and a `state` that walks
-  `input-streaming` → `input-available` → `output-available` or
-  `output-error`. When the tool needs a human first, it detours through
-  `approval-requested` → `approval-responded`, and a denial ends in
-  `output-denied`.
-- `step-start`, a marker at the start of each model call, plus `file`,
-  `source-url`, `source-document` and `data-<name>` for whatever the app
-  streams alongside.
+Each part is a small state machine of its own. A text or reasoning part has
+two states. A tool part has three on the straight path, and a detour of
+three more when the tool needs a human first. Send the message below, which
+asks for the weather and then for a file to be deleted, and watch the
+parts of the reply walk the diagram. The delete needs your approval.
 
-Each part is a small state machine of its own, and the thread renders by
-switching on `part.type` and then on `part.state`. The caret goes on a text
-part whose state is `streaming`. The reasoning disclosure shimmers while its
-part is `streaming` and collapses when it is `done`. The tool card spins in
-`input-streaming`, shows its arguments in `input-available`, and shows a
-result in `output-available`.
+<PartLifecycle client:visible />
+
+The thread renders by switching on `part.type` and then on `part.state`.
+The caret goes on a text part whose state is `streaming`. The reasoning
+disclosure shimmers while its part is `streaming` and collapses when it is
+`done`. The tool card spins in `input-streaming`, shows its arguments in
+`input-available`, and shows a result in `output-available`.
 
 ```tsx
 {
@@ -103,33 +123,41 @@ does not exist yet and there is no part to ask.
 
 Both levels are written by the same thing: the UI message stream. The server
 turns `streamText` into `toUIMessageStream()`, and `useChat` applies each
-chunk to the messages array the way a reducer applies an action. One turn
-with a reasoning step, a tool call and an approval looks like this on the
-wire.
+chunk to the messages array the way a reducer applies an action. Play the
+same turn again below, this time with the chunks on one side and what they
+change on the other.
 
-| Chunk                                                             | What changes                                           |
-| ----------------------------------------------------------------- | ------------------------------------------------------ |
-| `start`                                                           | A new assistant message. `status` becomes `streaming`. |
-| `start-step`                                                      | A `step-start` part. One model call begins.            |
-| `reasoning-start`, `reasoning-delta` ×n, `reasoning-end`          | A reasoning part, `streaming` then `done`.             |
-| `tool-input-start`, `tool-input-delta` ×n, `tool-input-available` | A tool part, `input-streaming` then `input-available`. |
-| `tool-approval-request`                                           | The tool part becomes `approval-requested`.            |
-| `finish-step`, `finish`                                           | The stream ends. `status` becomes `ready`.             |
+<WireReplay client:visible />
+
+In a table, one turn with a reasoning step, a tool call and an approval
+looks like this on the wire. The player above is faithful to it in every
+chunk but one: it does not send `finish-step`, which a server does before
+`finish`.
+
+| Chunk                                                             | What changes                                                        |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `start`                                                           | A new assistant message with its id. `status` is still `submitted`. |
+| `start-step`                                                      | A `step-start` part. One model call begins.                         |
+| `reasoning-start`, `reasoning-delta` ×n, `reasoning-end`          | A reasoning part, `streaming` then `done`. `status` is `streaming`. |
+| `tool-input-start`, `tool-input-delta` ×n, `tool-input-available` | A tool part, `input-streaming` then `input-available`.              |
+| `tool-approval-request`                                           | The tool part becomes `approval-requested`.                         |
+| `finish-step`, `finish`                                           | The stream closes. `status` becomes `ready`.                        |
 
 And after the user approves:
 
-| Chunk                                                   | What changes                              |
-| ------------------------------------------------------- | ----------------------------------------- |
-| `tool-output-available`                                 | The tool part becomes `output-available`. |
-| `start-step`, `text-start`, `text-delta` ×n, `text-end` | A text part, `streaming` then `done`.     |
-| `finish-step`, `finish`                                 | `status` is `ready` again.                |
+| Chunk                                                   | What changes                                                   |
+| ------------------------------------------------------- | -------------------------------------------------------------- |
+| `start`                                                 | The same assistant message. The new parts append to it.        |
+| `tool-output-available`                                 | The tool part becomes `output-available`.                      |
+| `start-step`, `text-start`, `text-delta` ×n, `text-end` | A new `step-start`, then a text part, `streaming` then `done`. |
+| `finish-step`, `finish`                                 | `status` is `ready` again.                                     |
 
 Every chunk type maps to exactly one mutation, which is why the client never
 needs a branch that says "if the text looks finished". `stop()` aborts the
-fetch, the stream ends with `abort`, and the partial parts stay where they
-are, so a cancelled turn keeps its tokens and the status goes back to
-`ready`. An `error` chunk sets `status` to `error` and leaves the draft in
-the composer.
+request on the client, so no further chunk arrives; the partial parts stay
+where they are, a cancelled turn keeps its tokens, and the status goes back
+to `ready`. An `error` chunk from the server is thrown on the client, which
+sets `status` to `error` and leaves the draft in the composer.
 
 That is the lookup-table reducer, and the SDK owns it. The transport is the
 only thing that writes to either level, which is why a component should
@@ -145,6 +173,8 @@ server has no way to continue, so the step finishes and the stream closes.
 that. A composer that derives Send and Stop from `status` alone now shows
 Send while a tool sits waiting for a decision, and the docs' own suggestion,
 disable submit unless the status is `ready`, leaves it enabled.
+
+<ApprovalGap client:visible />
 
 This is the one place a component has to read the fine state to render the
 coarse control. The last assistant message has a tool part in
@@ -164,6 +194,7 @@ Pass `sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses
 and `useChat` resubmits once every pending approval has an answer. Leave it
 out and nothing happens until the app calls `sendMessage()` with no
 arguments, which the SDK treats as "continue from the pending approval".
+Untick the box above and try it.
 
 The SDK is right not to add a fifth status for this. Approval is a property
 of one tool call, not of the chat, and a turn can have several of them in
@@ -171,17 +202,15 @@ flight. Keeping it on the part is what lets the thread render three cards
 waiting and one already answered. The cost is that the composer has to look
 one level down, once.
 
-This is a reading of `chat.ts`, and it is easy to confirm in a scratch app:
-request approval, answer nothing, and watch `status` sit at `ready` while the
-card waits.
-
 ## The same shape elsewhere
 
 The split is not peculiar to the AI SDK. assistant-ui's external store takes
-an `isRunning` boolean for the thread and a `status` of `running`,
-`complete` or `incomplete` on each assistant message, which is the same two
-levels with different names. A hand-rolled reducer over a raw SSE stream ends
-up in the same place, because the two questions the interface asks are
-different in kind. "Is a turn in progress" is about the chat. "What is this
-block doing right now" is about the block. Hold the first in one place, pass
-it down, and let every component derive what it needs from the second.
+an `isRunning` boolean for the thread and a `status` on each assistant
+message of `running`, `requires-action`, `complete` or `incomplete`, which is
+the same two levels with different names, down to the pause: `requires-action`
+lives on the message, not the thread. A hand-rolled reducer over a raw SSE
+stream ends up in the same place, because the two questions the interface
+asks are different in kind. "Is a turn in progress" is about the chat. "What
+is this block doing right now" is about the block. Hold the first in one
+place, pass it down, and let every component derive what it needs from the
+second.

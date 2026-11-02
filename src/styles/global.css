@@ -1,5 +1,9 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+/* Keyframes and utilities (shimmer, scroll-fade) that the v4 shadcn components
+   expect. It defines no color tokens, so the palette below stays the one
+   source of truth. */
+@import "shadcn/tailwind.css";
 @plugin "@tailwindcss/typography";
 
 /* Class-based dark mode, set on <html> before first paint by the inline script

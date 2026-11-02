@@ -15,7 +15,7 @@ export type DemoMessage = UIMessage<
   {
     getWeather: {
       input: { city: string };
-      output: { city: string; temperatureC: number; condition: string };
+      output: { city: string; temperatureF: number; condition: string };
     };
     deleteFile: {
       input: { path: string };
@@ -67,7 +67,9 @@ export function statusScript() {
  */
 export function fullTurn() {
   return createChat<DemoMessage>()
-    .user("What's the weather in Reykjavík? Then delete scratch/notes.md.")
+    .user(
+      "What's the weather in Kansas City, MO? Then delete scratch/notes.md.",
+    )
     .sleep(700)
     .assistant(({ writer }) => {
       writer.stepStart();
@@ -77,9 +79,13 @@ export function fullTurn() {
       );
       writer.sleep(300);
       writer
-        .tool("getWeather", { input: { city: "Reykjavík" } })
+        .tool("getWeather", { input: { city: "Kansas City, MO" } })
         .sleep(1100)
-        .output({ city: "Reykjavík", temperatureC: 4, condition: "windy" });
+        .output({
+          city: "Kansas City, MO",
+          temperatureF: 64,
+          condition: "sunny",
+        });
       writer.sleep(300);
       writer.tool("deleteFile", {
         input: { path: "scratch/notes.md" },
@@ -92,8 +98,8 @@ export function fullTurn() {
       writer.sleep(500);
       writer.text(
         toolCall?.approved
-          ? "Reykjavík is 4°C and windy. scratch/notes.md is gone."
-          : "Reykjavík is 4°C and windy. I left scratch/notes.md where it was.",
+          ? "Kansas City is 64°F and sunny. scratch/notes.md is gone."
+          : "Kansas City is 64°F and sunny. I left scratch/notes.md where it was.",
         { delayMs: 35 },
       );
     });

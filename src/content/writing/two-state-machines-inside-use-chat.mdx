@@ -1,0 +1,187 @@
+---
+title: The two state machines inside useChat
+description: A four-value chat status, a state on every message part, and the stream protocol that writes both. Why Send becomes Stop from one value, why no component reads message text, and the one place the coarse status is not enough.
+pubDate: 2026-11-02
+category: "Thoughts"
+---
+
+Open any AI product and watch one turn. You type, you press Send, and Send
+becomes Stop. A thinking indicator appears. It is replaced by a reasoning
+disclosure, then a tool card that spins, then text arriving with a caret.
+Maybe the tool asks you for permission and everything pauses. Then the caret
+goes away, an actions bar appears, and Stop is Send again.
+
+Every product renders that sequence with its own components and its own
+look. Underneath, every one of them is walking the same machine, and if the
+product is built on the Vercel AI SDK, the machine is already written down.
+`useChat` keeps it at two levels: one coarse status for the whole chat, and a
+fine state on every part of every message. Most of the interface work in an
+AI product is deciding which of the two a given pixel should listen to.
+
+## The coarse one: four values
+
+`useChat` returns a `status` with four values.
+
+| `status`    | Meaning                                             | Composer         |
+| ----------- | --------------------------------------------------- | ---------------- |
+| `ready`     | Nothing in flight. A new message can be sent.       | Send             |
+| `submitted` | The request has gone out. No chunk has arrived yet. | Stop             |
+| `streaming` | Chunks are arriving.                                | Stop             |
+| `error`     | The request failed. The draft is still in the box.  | Send, with Retry |
+
+That is the whole top-level machine. There is no `thinking`, no
+`calling-tool`, no `awaiting-approval`. The status does not know what kind of
+content is streaming, only that something is. Reading `chat.ts` in the `ai`
+package, four things move it: sending sets `submitted`, the first chunk
+written sets `streaming`, the stream ending sets `ready` whether it ended
+normally or by abort, and a thrown error sets `error`. Nothing else touches
+it.
+
+The composer's primary control falls out of it in one line:
+
+```tsx
+const showStop = status === "submitted" || status === "streaming";
+```
+
+The tempting alternative watches the network: a request is in flight, so
+show Stop. It is wrong because a request can be in flight for reasons that
+are not a turn, a title being generated, a draft being saved. The status is
+scoped to the chat, so it is the one value that means "this turn is in
+progress", and it is the only input the composer should have.
+
+## The fine one: a state on every part
+
+A `UIMessage` is `{ id, role, parts, metadata }`, and `parts` is where the
+rest of the machine lives. The part types that render during a turn:
+
+- `text`, with the text so far and `state: "streaming" | "done"`.
+- `reasoning`, with the same shape.
+- `tool-<name>`, or `dynamic-tool` when the tool was not known at build
+  time, with a `toolCallId`, the `input`, and a `state` that walks
+  `input-streaming` → `input-available` → `output-available` or
+  `output-error`. When the tool needs a human first, it detours through
+  `approval-requested` → `approval-responded`, and a denial ends in
+  `output-denied`.
+- `step-start`, a marker at the start of each model call, plus `file`,
+  `source-url`, `source-document` and `data-<name>` for whatever the app
+  streams alongside.
+
+Each part is a small state machine of its own, and the thread renders by
+switching on `part.type` and then on `part.state`. The caret goes on a text
+part whose state is `streaming`. The reasoning disclosure shimmers while its
+part is `streaming` and collapses when it is `done`. The tool card spins in
+`input-streaming`, shows its arguments in `input-available`, and shows a
+result in `output-available`.
+
+```tsx
+{
+  message.parts.map((part, i) => {
+    if (isReasoningUIPart(part))
+      return (
+        <Reasoning key={i} text={part.text} open={part.state === "streaming"} />
+      );
+    if (isTextUIPart(part))
+      return (
+        <Markdown key={i} text={part.text} caret={part.state === "streaming"} />
+      );
+    if (isToolUIPart(part))
+      return (
+        <ToolCard key={part.toolCallId} name={getToolName(part)} part={part} />
+      );
+    return null;
+  });
+}
+```
+
+Nothing here inspects the text to decide how to render. Nothing checks
+whether the output has a closing fence yet, or whether the message body is
+still empty. The thinking indicator is the one exception that proves the
+rule: it shows when `status` is `submitted`, because the assistant message
+does not exist yet and there is no part to ask.
+
+## The wire writes both
+
+Both levels are written by the same thing: the UI message stream. The server
+turns `streamText` into `toUIMessageStream()`, and `useChat` applies each
+chunk to the messages array the way a reducer applies an action. One turn
+with a reasoning step, a tool call and an approval looks like this on the
+wire.
+
+| Chunk                                                             | What changes                                           |
+| ----------------------------------------------------------------- | ------------------------------------------------------ |
+| `start`                                                           | A new assistant message. `status` becomes `streaming`. |
+| `start-step`                                                      | A `step-start` part. One model call begins.            |
+| `reasoning-start`, `reasoning-delta` ×n, `reasoning-end`          | A reasoning part, `streaming` then `done`.             |
+| `tool-input-start`, `tool-input-delta` ×n, `tool-input-available` | A tool part, `input-streaming` then `input-available`. |
+| `tool-approval-request`                                           | The tool part becomes `approval-requested`.            |
+| `finish-step`, `finish`                                           | The stream ends. `status` becomes `ready`.             |
+
+And after the user approves:
+
+| Chunk                                                   | What changes                              |
+| ------------------------------------------------------- | ----------------------------------------- |
+| `tool-output-available`                                 | The tool part becomes `output-available`. |
+| `start-step`, `text-start`, `text-delta` ×n, `text-end` | A text part, `streaming` then `done`.     |
+| `finish-step`, `finish`                                 | `status` is `ready` again.                |
+
+Every chunk type maps to exactly one mutation, which is why the client never
+needs a branch that says "if the text looks finished". `stop()` aborts the
+fetch, the stream ends with `abort`, and the partial parts stay where they
+are, so a cancelled turn keeps its tokens and the status goes back to
+`ready`. An `error` chunk sets `status` to `error` and leaves the draft in
+the composer.
+
+That is the lookup-table reducer, and the SDK owns it. The transport is the
+only thing that writes to either level, which is why a component should
+never keep an `isLoading` beside the status. There is nothing for it to be
+truer than, and the day a transition is added, only one of the two will be
+updated.
+
+## Where the coarse status is not enough
+
+Look at the first wire table again. When the tool asks for approval, the
+server has no way to continue, so the step finishes and the stream closes.
+`status` goes to `ready`. The turn is not over, but the chat does not know
+that. A composer that derives Send and Stop from `status` alone now shows
+Send while a tool sits waiting for a decision, and the docs' own suggestion,
+disable submit unless the status is `ready`, leaves it enabled.
+
+This is the one place a component has to read the fine state to render the
+coarse control. The last assistant message has a tool part in
+`approval-requested`, so the turn is paused:
+
+```tsx
+const last = messages.at(-1);
+const awaitingApproval =
+  last?.role === "assistant" &&
+  last.parts.some((p) => isToolUIPart(p) && p.state === "approval-requested");
+```
+
+The user answers with `addToolApprovalResponse({ id: part.approval.id,
+approved })`, which flips the part to `approval-responded` and does not touch
+`status`. Whether the turn then resumes on its own is a separate decision.
+Pass `sendAutomaticallyWhen: lastAssistantMessageIsCompleteWithApprovalResponses`
+and `useChat` resubmits once every pending approval has an answer. Leave it
+out and nothing happens until the app calls `sendMessage()` with no
+arguments, which the SDK treats as "continue from the pending approval".
+
+The SDK is right not to add a fifth status for this. Approval is a property
+of one tool call, not of the chat, and a turn can have several of them in
+flight. Keeping it on the part is what lets the thread render three cards
+waiting and one already answered. The cost is that the composer has to look
+one level down, once.
+
+This is a reading of `chat.ts`, and it is easy to confirm in a scratch app:
+request approval, answer nothing, and watch `status` sit at `ready` while the
+card waits.
+
+## The same shape elsewhere
+
+The split is not peculiar to the AI SDK. assistant-ui's external store takes
+an `isRunning` boolean for the thread and a `status` of `running`,
+`complete` or `incomplete` on each assistant message, which is the same two
+levels with different names. A hand-rolled reducer over a raw SSE stream ends
+up in the same place, because the two questions the interface asks are
+different in kind. "Is a turn in progress" is about the chat. "What is this
+block doing right now" is about the block. Hold the first in one place, pass
+it down, and let every component derive what it needs from the second.

@@ -62,12 +62,21 @@
  * so their edges line up at every viewport. They generate `max-w-page` and
  * `px-gutter` (and `-mx-gutter`, for a row that scrolls edge to edge).
  *
+ * The page width is the `xl` breakpoint, where the entry layout turns on its
+ * table-of-contents rail (src/layouts/Entry.astro), so the rail never shows
+ * in a page narrower than it was sized for. At that width the rail's column
+ * is (80rem - 2 x 3rem gutter - 42rem text - 2 x 2rem gap) / 2 = 14rem, of
+ * which the rail takes 10rem; with the gap that leaves 6rem between the rail
+ * and the text column, enough for the 3.5rem code-block bleed (`prose-bleed`
+ * below) and air. At 72rem the column was exactly the rail's width and the
+ * bleed overlapped it.
+ *
  * The gutter widens with the viewport, at the `sm` and `md` breakpoints: a
  * phone needs every pixel for text, but at tablet and small-laptop widths,
  * before `max-w-page` starts adding margin of its own, 1.5rem crowds the edge.
  */
 @theme {
-  --container-page: 72rem;
+  --container-page: 80rem;
   --spacing-gutter: 1.5rem;
 }
 
